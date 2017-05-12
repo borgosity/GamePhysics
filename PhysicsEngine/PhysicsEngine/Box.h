@@ -1,7 +1,7 @@
 #pragma once
-#include "RigidBody.h"
+#include "PhysicsObject.h"
 class Box :
-	public RigidBody
+	public PhysicsObject
 {
 public:
 	Box();

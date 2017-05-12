@@ -7,6 +7,15 @@
 
 class PhysicsObject;
 class PhysicsScene;
+class Sphere;
+
+enum DemoType {
+	DEMO1 = 1,
+	DEMO2 = 2,
+	DEMO3 = 3,
+	DEMO4 = 4,
+	DEMO5 = 5
+};
 
 class PhysicsApp :
 	public aie::Application
@@ -28,6 +37,9 @@ public:
 	void draw2D();
 	void draw3D();
 
+	void reset();
+	void clear();
+
 private:
 	PhysicsScene * m_physicsScene = nullptr;
 	PhysicsObject * m_poNumberOne = nullptr;
@@ -41,5 +53,18 @@ private:
 	aie::Font		* m_font;
 	glm::mat4	m_viewMatrix;
 	glm::mat4	m_projectionMatrix;
+
+	// demos
+	DemoType m_demo;
+	void demo1();
+	// add force demo
+	void demo2();
+	// rocket demo
+	Sphere * m_rocket = nullptr;
+	float m_burnTime;
+	void demo3(float a_dt);
+
+
+	void demo4();
 };
 

@@ -10,11 +10,14 @@ public:
 	PhysicsScene();
 	~PhysicsScene();
 
-	void addActor(PhysicsObject * a_actor);
-	void removeActor(PhysicsObject * a_actor);
 	void update(float a_dt);
 	void updateGizmos();
 	void debugScene();
+	// actor functions
+	void addActor(PhysicsObject * a_actor);
+	void removeActor(PhysicsObject * a_actor);
+	void resetScene();
+	void clearScene();
 
 	void setGravity(const glm::vec3 a_gravity) { m_gravity = a_gravity; }
 	glm::vec3 setGravity() const { return m_gravity; }
@@ -25,6 +28,11 @@ protected:
 	glm::vec3	m_gravity;
 	float		m_timeStep;
 	std::vector<PhysicsObject*> m_actors;
-
+	// gui options
+	bool m_applyForce;
+	int m_iActorA;
+	PhysicsObject* m_pActorA = nullptr;
+	int m_iActorB;
+	PhysicsObject* m_pActorB = nullptr;
 };
 

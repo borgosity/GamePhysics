@@ -45,6 +45,9 @@
     <ClInclude Include="PhysicsScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Rocket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PhysicsObject.cpp">
@@ -69,6 +72,9 @@
       <Filter>ImGui</Filter>
     </ClCompile>
     <ClCompile Include="PhysicsScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Rocket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
