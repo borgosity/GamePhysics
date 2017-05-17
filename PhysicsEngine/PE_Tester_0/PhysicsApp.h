@@ -1,6 +1,6 @@
 #pragma once
 #include "Application.h"
-#include <glm/mat4x4.hpp>
+#include <glm/glm.hpp>
 #include "Renderer2D.h"
 
 #include "GameDef.h"
@@ -8,13 +8,17 @@
 class PhysicsObject;
 class PhysicsScene;
 class Sphere;
+class Plane;
 
 enum DemoType {
 	DEMO1 = 1,
 	DEMO2 = 2,
 	DEMO3 = 3,
 	DEMO4 = 4,
-	DEMO5 = 5
+	DEMO5 = 5,
+	DEMO6 = 6,
+	DEMO7 = 7,
+	DEMO8 = 8,
 };
 
 class PhysicsApp :
@@ -52,6 +56,7 @@ private:
 	aie::Renderer2D * m_renderer;
 	aie::Font		* m_font;
 	glm::mat4	m_viewMatrix;
+	glm::vec3	m_cameraView;
 	glm::mat4	m_projectionMatrix;
 
 	// demos
@@ -64,7 +69,22 @@ private:
 	float m_burnTime;
 	void demo3(float a_dt);
 
+	// projectile demo
+	PhysicsScene * m_demo4Scene = nullptr;
+	Sphere * m_projectile = nullptr;
+	float m_timeStep;
+	float m_totalTime;
+	float m_angle;
+	float m_speed;
+	void demo4(float a_dt);
 
-	void demo4();
+	// collision detection
+	Sphere * m_sphereA = nullptr;
+	Sphere * m_sphereB = nullptr;
+	Plane * m_planeA = nullptr;
+	Plane * m_planeB = nullptr;
+
+	void demo5(float a_dt);
+
 };
 

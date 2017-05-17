@@ -26,7 +26,9 @@ public:
 	RigidBodyData data;
 	void applyForce(glm::vec3 a_force);
 	void applyForceToActor(RigidBody * a_pActor2, glm::vec3 a_force);
-
+	glm::vec3 predictPosition(float a_time, float a_angle, float a_speed, glm::vec3 a_gravity);
+	glm::vec3 predictPosition(float a_time, glm::vec3 a_velocity, glm::vec3 a_gravity);
+	glm::vec3 predictPosition(float a_time, glm::vec3 a_gravity);
 protected:
 	glm::vec3 m_startPosition;
 };

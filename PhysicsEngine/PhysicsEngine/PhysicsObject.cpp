@@ -12,6 +12,16 @@ glm::vec3 PhysicsObject::getPosition()
 	if (m_rigidbody != nullptr) {
 		return m_rigidbody->data.position;
 	}
+	else {
+		return glm::vec3(-1.0f);
+	}
+}
+
+void PhysicsObject::setVelocity(glm::vec3 a_velocity)
+{
+	if (m_rigidbody != nullptr) {
+		m_rigidbody->data.velocity = a_velocity;
+	}
 }
 
 void PhysicsObject::resetPosition()

@@ -2,6 +2,8 @@
 #include "Font.h"
 #include "Input.h"
 #include "Gizmos.h"
+#include <cmath>
+#include <iostream>
 
 #include "imgui_glfw3.h"
 
@@ -9,12 +11,14 @@
 #include "glm\gtc\matrix_transform.hpp"
 #include "glm\gtc\type_ptr.hpp"
 #include "glm\ext.hpp"
+#include "glm\gtx\vector_angle.hpp"
 
 #include "PhysicsObject.h"
 #include "RigidBody.h"
 #include "PhysicsScene.h"
 #include "Sphere.h"
-
+#include "Plane.h"
+#include "GameDef.h"
 
 PhysicsApp::PhysicsApp()
 {
@@ -31,7 +35,8 @@ bool PhysicsApp::startup()
 	// initialise gizmo primitive counts
 	aie::Gizmos::create(10000, 10000, 10000, 10000);
 	// create simple camera transforms
-	m_viewMatrix = glm::lookAt(glm::vec3(10), glm::vec3(0), glm::vec3(0, 1, 0));
+	m_cameraView = glm::vec3(0.0f, 10.0f, 20.0f);
+	m_viewMatrix = glm::lookAt(m_cameraView, glm::vec3(0), glm::vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f,
 											getWindowWidth() / (float)getWindowHeight(),
 											0.1f, 1000.f);
@@ -42,7 +47,10 @@ bool PhysicsApp::startup()
 	m_render2D = false;
 	m_debug = false;
 	m_renderer = new aie::Renderer2D();
-	m_font = new aie::Font("./../font/consolas.ttf", 32);
+	std::string path = "../res/font/consolas.ttf";
+	m_font = new aie::Font("../res/font/consolas.ttf", 16);
+
+	//printf(" %s", _fullpath(NULL, path.c_str(), 40));
 
 	// physics
 	m_physicsScene = new PhysicsScene();
@@ -70,6 +78,11 @@ void PhysicsApp::fixedUpdate(float a_dt)
 	}
 	m_physicsScene->update(a_dt);
 	m_physicsScene->updateGizmos();
+	// update demo 4 scene if requested
+	if (m_demo == 4) {
+		m_demo4Scene->update(a_dt);
+		m_demo4Scene->updateGizmos();
+	}
 }
 
 void PhysicsApp::update2D(float a_dt)
@@ -84,8 +97,9 @@ void PhysicsApp::update(float a_dt)
 {
 	// update input
 	aie::Input* input = aie::Input::getInstance();
-
+	// clear all gizmos
 	aie::Gizmos::clear();
+
 	if (m_renderChosen) {
 		fixedUpdate(a_dt);
 	}
@@ -102,10 +116,13 @@ void PhysicsApp::update(float a_dt)
 		demo3(a_dt);
 		break;
 	case DEMO4:
+		demo4(a_dt);
 		break;
 	case DEMO5:
+		demo5(a_dt);
 		break;
 	default:
+		std::cout << "Demo not yet defined" << std::endl;
 		break;
 	}
 
@@ -135,9 +152,12 @@ void PhysicsApp::draw()
 	// draw debug if requested
 	if (m_debug) {
 		m_physicsScene->debugScene();
+		if (m_demo == 4 && m_renderChosen) {
+			m_demo4Scene->debugScene();
+		}
 	}
 	// output some text
-	m_renderer->drawText(m_font, "Press ESC to quit", HALF_SW, HALF_SH);
+	m_renderer->drawText(m_font, "Press ESC to quit", 0.0f, 0.0f);
 
 	// done drawing sprites
 	m_renderer->end();
@@ -158,6 +178,13 @@ void PhysicsApp::drawGUI()
 	ImGui::RadioButton("Demo 3", &demoMode, DEMO3);
 	ImGui::SameLine();
 	ImGui::RadioButton("Demo 4", &demoMode, DEMO4);
+	ImGui::RadioButton("Demo 5", &demoMode, DEMO5);
+	ImGui::SameLine();
+	ImGui::RadioButton("Demo 6", &demoMode, DEMO6);
+	ImGui::SameLine();
+	ImGui::RadioButton("Demo 7", &demoMode, DEMO7);
+	ImGui::SameLine();
+	ImGui::RadioButton("Demo 8", &demoMode, DEMO8);
 	if (demoMode != m_demo) {
 		m_renderChosen = false;
 		clear();
@@ -237,27 +264,45 @@ void PhysicsApp::drawGUI()
 	ImGui::Text("Clear Scene");
 	ImGui::PopStyleColor(3);
 	ImGui::PopID();
+	// --------------------------  Camera ---------------------------------
+	ImGui::Separator();
+	if (m_render3D) {
+		ImGui::Text("Adjust Camera");
+		ImGui::DragFloat("Left/Right", &m_cameraView.x, 0.01f, 100.0f, 1.0f);
+		ImGui::DragFloat("Up/Down", &m_cameraView.y, 0.01f, 100.0f, 1.0f);
+		ImGui::DragFloat("In/Out", &m_cameraView.z, 0.01f, 100.0f, 1.0f);
+	}
 	ImGui::End();
 }
 
 void PhysicsApp::draw2D()
 {
 	static float aspectRatio = 16 / 9.0f;
+	glm::vec4 grey(0.5f, 0.5f, 0.5f, 1.0f);
+	glm::vec2 startX(-100.0f, 0.0f );
+	glm::vec2 endX(100.0f, 0.0f);
+	aie::Gizmos::add2DLine(startX, endX, grey);
+	glm::vec2 startY(0.0f, 100 / aspectRatio);
+	glm::vec2 endY(0.0f, -100 / aspectRatio);
+	aie::Gizmos::add2DLine(startY, endY, grey);
+	// draw gizmos
 	aie::Gizmos::draw2D(glm::ortho<float>(
 		-100, 100,
 		-100 / aspectRatio, 100 / aspectRatio, -1.0f, 1.0f
 		)
 	);
-	m_renderer->drawLine(HALF_SW, 0.0f, HALF_SW, SCREEN_H, 1.0f);
-	m_renderer->drawLine(0.0f, HALF_SH, SCREEN_W, HALF_SH, 1.0f);
+	//m_renderer->drawLine(HALF_SW, 0.0f, HALF_SW, SCREEN_H, 1.0f);
+	//m_renderer->drawLine(0.0f, HALF_SH, SCREEN_W, HALF_SH, 1.0f);
 }
 
 void PhysicsApp::draw3D()
 {
+	// update view matrix incase view changed
+	m_viewMatrix = glm::lookAt(m_cameraView, glm::vec3(0), glm::vec3(0, 1, 0));
 	// update perspective in case window resized
-	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f,
-		getWindowWidth() / (float)getWindowHeight(),
-		0.1f, 1000.f);
+	float fovy = glm::pi<float>() * 0.25f;
+	float aspect = getWindowWidth() / (float)getWindowHeight();
+	m_projectionMatrix = glm::perspective(fovy, aspect,	0.1f, 1000.f);
 
 	// draw a simple grid with gizmos
 	glm::vec4 white(1.0f);
@@ -274,63 +319,70 @@ void PhysicsApp::draw3D()
 	// draw gizmos
 	aie::Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 }
-
+/// reset scene to start
 void PhysicsApp::reset()
 {
 	m_physicsScene->resetScene();
+	if (m_demo4Scene != nullptr) {
+		m_demo4Scene->resetScene();
+	}
 }
-
+/// clear scene of objects
 void PhysicsApp::clear()
 {
 	m_physicsScene->clearScene();
+	if (m_demo4Scene != nullptr) {
+		m_demo4Scene->clearScene();
+	}
 }
-
+/*****************************************************************************************
+*  Demo basic ball movement
+*****************************************************************************************/
 void PhysicsApp::demo1()
 {
-	if (m_render2D && !m_render3D) {
-		if (!m_renderChosen) {
-			Sphere * ball = new Sphere(glm::vec3(-15.0f, 5.0f, 0.0f), glm::vec3(5.0f, 0.0f, 0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1));
+	if (!m_renderChosen) {
+		if (m_render2D && !m_render3D) {
+			Sphere * ball = new Sphere(glm::vec3(-15.0f, 5.0f, 0.0f), glm::vec3(5.0f, 0.0f, 0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
 			m_physicsScene->addActor(ball);
-			m_renderChosen = true;
 		}
-	}
-	if (m_render3D && !m_render2D) {
-		if (!m_renderChosen) {
-			Sphere * ball = new Sphere(glm::vec3(-11.0f, 0.0f, 0.01f), glm::vec3(5.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
-			m_physicsScene->addActor(ball);
-			m_renderChosen = true;
+		if (m_render3D && !m_render2D) {
+				Sphere * ball = new Sphere(glm::vec3(-11.0f, 0.0f, 0.01f), glm::vec3(5.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
+				m_physicsScene->addActor(ball);
 		}
+		m_physicsScene->setGravity(glm::vec3(0.0f, 0.f, 0.0f));
+		m_renderChosen = true;
 	}
 }
-// force balls
+/*****************************************************************************************
+*  Demo 2 force ball
+*****************************************************************************************/
 void PhysicsApp::demo2()
 {
-	if (m_render2D && !m_render3D) {
-		if (!m_renderChosen) {
-			Sphere * ballA = new Sphere(glm::vec3(-5.0f, 40.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1));
-			m_physicsScene->addActor(ballA);
-			Sphere * ballB = new Sphere(glm::vec3(5.0f, 40.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1));
-			m_physicsScene->addActor(ballB);
-			m_renderChosen = true;
+	if (!m_renderChosen) {
+		if (m_render2D && !m_render3D) {
+				Sphere * ballA = new Sphere(glm::vec3(-5.0f, 40.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
+				m_physicsScene->addActor(ballA);
+				Sphere * ballB = new Sphere(glm::vec3(5.0f, 40.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
+				m_physicsScene->addActor(ballB);
 		}
-	}
-	if (m_render3D && !m_render2D) {
-		if (!m_renderChosen) {
-			Sphere * ballA = new Sphere(glm::vec3(-0.5f, 0.0f, 0.01f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
-			m_physicsScene->addActor(ballA);
-			Sphere * ballB = new Sphere(glm::vec3(0.5f, 0.0f, 0.01f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
-			m_physicsScene->addActor(ballB);
-			m_renderChosen = true;
+		if (m_render3D && !m_render2D) {
+				Sphere * ballA = new Sphere(glm::vec3(-0.5f, 0.0f, 0.01f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
+				m_physicsScene->addActor(ballA);
+				Sphere * ballB = new Sphere(glm::vec3(0.5f, 0.0f, 0.01f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
+				m_physicsScene->addActor(ballB);
 		}
+		m_renderChosen = true;
 	}
 }
-
+/*****************************************************************************************
+*  Demo 3 rocket
+*****************************************************************************************/
 void PhysicsApp::demo3(float a_dt)
 {
 	// 2D simulation
 	if (m_render2D && !m_render3D) {
 		if (!m_renderChosen) {
-			m_rocket = new Sphere(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 20.0f, 2.0f, glm::vec4(0, 1, 0, 1));
+			m_rocket = new Sphere(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 20.0f, 2.0f, glm::vec4(0, 1, 0, 1), true);
 			m_physicsScene->addActor(m_rocket);
 			m_renderChosen = true;
 		}
@@ -343,7 +395,7 @@ void PhysicsApp::demo3(float a_dt)
 
 				m_rocket->rigidbody()->data.mass -= 0.5f;
 				glm::vec3 postion = m_rocket->getPosition() + glm::vec3(0.0f, -m_rocket->getRadius(), 0.0f);
-				Sphere * gas = new Sphere(glm::vec3(postion.x, postion.y + 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.5f, glm::vec4(0.5, 0.5, 0.5, 1));
+				Sphere * gas = new Sphere(glm::vec3(postion.x, postion.y + 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.5f, glm::vec4(0.5, 0.5, 0.5, 1), true);
 				m_rocket->rigidbody()->applyForceToActor(gas->rigidbody(), glm::vec3(0.0f, -2.0f, 0.0f));
 				m_physicsScene->addActor(gas);
 			}
@@ -373,5 +425,123 @@ void PhysicsApp::demo3(float a_dt)
 			}
 			m_burnTime -= a_dt;
 		}
+	}
+}
+/*****************************************************************************************
+*  Demo 4 projectile prediction
+*****************************************************************************************/
+void PhysicsApp::demo4(float a_dt)
+{
+	// 2D simulation
+	if (m_render2D && !m_render3D) {
+		if (!m_renderChosen) {
+			m_angle = 45.0f;
+			m_speed = 25.0f;
+			// actual projectile
+			m_projectile = new Sphere(glm::vec3(0.0f, 0.0f, 0.0f), m_angle, m_speed, 3.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
+			m_physicsScene->addActor(m_projectile);
+			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
+			m_renderChosen = true;
+			m_timeStep = 0.0f;
+			m_totalTime = 0.0f;
+			// predictive projectiles
+			m_demo4Scene = new 	PhysicsScene();
+			m_demo4Scene->setGravity(glm::vec3(0.0f, 0.0f, 0.0f));
+			m_demo4Scene->setTimeStep(0.01f);
+			// plot initial position
+			glm::vec3 position = m_projectile->rigidbody()->predictPosition(m_totalTime, glm::vec3(0.0f, -10.0f, 0.0f));
+			// create projectile object
+			Sphere * ball = new Sphere(position, glm::vec3(0.0f), 3.0f, 1.0f, glm::vec4(1, 0, 0, 1), true);
+			m_demo4Scene->addActor(ball);
+		}
+		// increase velocity over time
+		if (m_timeStep < 0.0f) {
+			m_timeStep = 0.25f;
+			m_totalTime += 0.1f;
+			// get potential future position of object
+			glm::vec3 position = m_projectile->rigidbody()->predictPosition(m_totalTime, glm::vec3(0.0f, -10.0f, 0.0f));
+
+			// create projectile object
+			if (m_demo4Scene->numberOfActors() < 50) {
+				Sphere * ball = new Sphere(position, glm::vec3(0.0f), 3.0f, 1.0f, glm::vec4(1, 0, 0, 1), true);
+				m_demo4Scene->addActor(ball);
+			}
+		}
+		m_timeStep -= a_dt;
+	}
+	// 3D simulation
+	if (m_render3D && !m_render2D) {
+		if (!m_renderChosen) {
+			m_angle = 45.0f;
+			m_speed = 10.0f;
+			m_projectile = new Sphere(glm::vec3(0.0f, 0.0f, 0.0f), m_angle, m_speed, 3.0f, 0.2f, glm::vec4(0, 1, 0, 1));
+			m_physicsScene->addActor(m_projectile);
+			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
+			m_renderChosen = true;
+			m_timeStep = 0.0f;
+			m_totalTime = 0.0f;
+			// predictive projectiles
+			m_demo4Scene = new 	PhysicsScene();
+			m_demo4Scene->setGravity(glm::vec3(0.0f, 0.0f, 0.0f));
+			m_demo4Scene->setTimeStep(0.01f);
+			// plot initial position
+			glm::vec3 position = m_projectile->rigidbody()->predictPosition(m_totalTime, glm::vec3(0.0f, -10.0f, 0.0f));
+			// create projectile object
+			Sphere * ball = new Sphere(position, glm::vec3(0.0f), 3.0f, 0.2f, glm::vec4(1, 0, 0, 1));
+			m_demo4Scene->addActor(ball);
+		}
+		// increase velocity over time
+		if (m_timeStep < 0.0f) {
+			m_timeStep = 0.25f;
+			m_totalTime += 0.1f;
+			// get potential future position of object
+			glm::vec3 position = m_projectile->rigidbody()->predictPosition(m_totalTime, glm::vec3(0.0f, -10.0f, 0.0f));
+			
+			// create projectile object
+			if (m_demo4Scene->numberOfActors() < 50) {
+				Sphere * ball = new Sphere(position, glm::vec3(0.0f), 3.0f, 0.2f, glm::vec4(1, 0, 0, 1));
+				m_demo4Scene->addActor(ball);
+			}
+		}
+		m_timeStep -= a_dt;
+	}
+}
+/*****************************************************************************************
+*  Demo 5 Collision Dectection
+*****************************************************************************************/
+void PhysicsApp::demo5(float a_dt)
+{
+	// 2D simulation
+	if (m_render2D && !m_render3D) {
+		if (!m_renderChosen) {
+			// world objects
+			m_sphereA = new Sphere(glm::vec3(20.0f, 20.0f, 0.0f), glm::vec3(0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
+			m_sphereB = new Sphere(glm::vec3(-20.0f, 20.0f, 0.0f), glm::vec3(0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
+			m_planeA = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 200.0f,true);
+			//m_planeB = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 200.0f, true);
+			m_physicsScene->addActor(m_sphereA);
+			m_physicsScene->addActor(m_sphereB);
+			m_physicsScene->addActor(m_planeA);
+			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
+			m_renderChosen = true;
+		}
+		m_physicsScene->checkCollisions();
+
+	}
+	// 3D simulation
+	if (m_render3D && !m_render2D) {
+		if (!m_renderChosen) {
+			// world objects
+			m_sphereA = new Sphere(glm::vec3(5.0f, 5.0f, 0.0f), glm::vec3(0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1));
+			m_sphereB = new Sphere(glm::vec3(-5.0f, 5.0f, 0.0f), glm::vec3(0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1));
+			m_planeA = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 200.0f);
+			//m_planeB = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 200.0f, true);
+			m_physicsScene->addActor(m_sphereA);
+			m_physicsScene->addActor(m_sphereB);
+			m_physicsScene->addActor(m_planeA);
+			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
+			m_renderChosen = true;
+		}
+		m_physicsScene->checkCollisions();
 	}
 }

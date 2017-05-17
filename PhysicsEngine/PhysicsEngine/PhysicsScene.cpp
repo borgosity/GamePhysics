@@ -1,9 +1,23 @@
 #include "PhysicsScene.h"
 #include "PhysicsObject.h"
 #include "RigidBody.h"
-#include "imgui_glfw3.h"
+#include "Sphere.h"
+#include "Plane.h"
+
 #include <string>
-#include <glm/gtc/type_ptr.hpp>
+#include <iostream>
+
+#include "imgui_glfw3.h"
+#include <glm\gtx\range.hpp>
+#include <glm\gtc\type_ptr.hpp> // used for gl::vec to [] in gui functions
+
+
+typedef bool(*fn)(PhysicsObject*, PhysicsObject*);
+
+static fn collisionFuncs[] = {
+	PhysicsScene::planeToPlane, PhysicsScene::planeToSphere,
+	PhysicsScene::sphereToPlane, PhysicsScene::sphereToSphere
+};
 
 PhysicsScene::PhysicsScene()
 {
@@ -13,7 +27,6 @@ PhysicsScene::PhysicsScene()
 	m_iActorB = 1;
 
 }
-
 
 PhysicsScene::~PhysicsScene()
 {
@@ -54,6 +67,95 @@ void PhysicsScene::resetScene()
 void PhysicsScene::clearScene()
 {
 	m_actors.clear();
+}
+
+void PhysicsScene::checkCollisions()
+{
+	int actorCount = numberOfActors();
+
+	// check for collisions with this object
+	for (int outer = 0; outer < actorCount - 1; outer++) {
+		for (int inner = outer +1; inner < actorCount; inner++) {
+			// object data
+			PhysicsObject* objA = m_actors[outer];
+			PhysicsObject* objB = m_actors[inner];
+			int shapeIdA = objA->getShapeID();
+			int shapeIdB = objB->getShapeID();
+			// function pointers
+			int functionID = (shapeIdA * SHAPE_COUNT) + shapeIdB;
+			fn collisionFuncPtr = collisionFuncs[functionID];
+			if (collisionFuncPtr != nullptr) {
+				// check for collision
+				collisionFuncPtr(objA, objB);
+			}
+		}
+	}
+}
+
+bool PhysicsScene::planeToPlane(PhysicsObject * a_planeA, PhysicsObject * a_planeB)
+{
+	Plane * planeA = (Plane*)a_planeA;
+	Plane * planeB = (Plane*)a_planeB;
+	// check if objects aren't null before testing
+	if (planeA != nullptr && planeB != nullptr) {
+		// check plane for collision
+		// if the normals are pointing in the same duirection
+		//	- just check distance between and distance fom origin
+		// if the normal are at an angle
+		//	- could do some fancy trig or aabb stuff
+	}
+	return false;
+}
+
+bool PhysicsScene::planeToSphere(PhysicsObject * a_plane, PhysicsObject * a_sphere)
+{
+	return sphereToPlane(a_sphere, a_plane);
+}
+
+bool PhysicsScene::sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_sphereB)
+{
+	Sphere * sphereA = (Sphere*)a_sphereA;
+	Sphere * sphereB = (Sphere*)a_sphereB;
+	// check if objects aren't null before testing
+	if (sphereA != nullptr && sphereB != nullptr) {
+		// check sphere for collision
+		float distance = glm::distance(sphereA->getPosition(), sphereB->getPosition());
+		float totalRadius = sphereA->getRadius() + sphereA->getRadius();
+		// compare distance between centers to combined radius
+		if (distance > totalRadius) {
+			// object colliding yes, stop objects
+			sphereA->setVelocity(glm::vec3(0.0f));
+			sphereB->setVelocity(glm::vec3(0.0f));
+			return true;
+		}
+	}
+	return false;
+}
+
+bool PhysicsScene::sphereToPlane(PhysicsObject * a_sphere, PhysicsObject * a_plane)
+{
+	Sphere * sphere = (Sphere*)a_sphere;
+	Plane * plane = (Plane*)a_plane;
+	// check if objects aren't null before testing
+	if (sphere != nullptr && plane != nullptr) {
+		glm::vec3 collNorm = plane->getNormal();
+
+		float gap = glm::dot(sphere->getPosition(), plane->getNormal() - plane->getDistance());
+		std::cout << " Sphere to Plane gap = " << gap << std::endl;
+		// flip normals if behind
+		if (gap < 0) {
+			collNorm *= -1;
+			gap *= -1;
+		}
+		// check sphere for collision
+		float intersection = sphere->getRadius() - gap;
+		if (intersection > 0) {
+			// object colliding, stop object
+			sphere->setVelocity(glm::vec3(0.0f));
+			return true;
+		}
+	}
+	return false;
 }
 
 void PhysicsScene::update(float a_dt)
@@ -107,7 +209,7 @@ void PhysicsScene::debugScene()
 	ImGui::Begin("Debug");
 	std::string text = "Physics Scene";
 	ImGui::Text(text.c_str());
-	ImGui::InputFloat3("gravity", glm::value_ptr(m_gravity), 2);
+	ImGui::DragFloat3("gravity", glm::value_ptr(m_gravity), 0.05f, -100.0f, 100.0f, "%.2f");
 	// apply force options
 	ImGui::InputInt("Actor A", &m_iActorA, 1, 1);
 	ImGui::InputInt("Actor B", &m_iActorB, 1, 1);

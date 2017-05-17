@@ -4,8 +4,8 @@ class Sphere :
 	public PhysicsObject
 {
 public:
-	Sphere(glm::vec3 position, glm::vec3 velocity, float mass, float radius, glm::vec4 colour);
-	Sphere(glm::vec3 position, float angle, float speed, float mass, float radius, glm::vec4 colour);
+	Sphere(glm::vec3 position, glm::vec3 velocity, float mass, float radius, glm::vec4 colour, bool twoD = false);
+	Sphere(glm::vec3 position, float angle, float speed, float mass, float radius, glm::vec4 colour, bool twoD = false);
 	virtual ~Sphere();
 
 	virtual void fixedUpdate(glm::vec3 gravity, float tiemStep);

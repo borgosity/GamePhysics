@@ -43,10 +43,10 @@ void RigidBody::debug()
 {	// create agent window
 	std::string windowName = "RigidBody";
 	ImGui::Text(windowName.c_str());
-	ImGui::InputFloat3("position", glm::value_ptr(data.position), 2);
-	ImGui::InputFloat3("velocity", glm::value_ptr(data.velocity), 2);
-	ImGui::InputFloat3("rotation", glm::value_ptr(data.rotation), 2);
-	ImGui::InputFloat("mass", &data.mass, 0.05f, 1.0f, 2);
+	ImGui::DragFloat3("position", glm::value_ptr(data.position), 0.05f, -100.0f, 100.0f, "%.2f");
+	ImGui::DragFloat3("velocity", glm::value_ptr(data.velocity), 0.05f, -100.0f, 100.0f, "%.2f");
+	ImGui::DragFloat3("rotation", glm::value_ptr(data.rotation), 0.05f, -100.0f, 100.0f, "%.2f");
+	ImGui::DragFloat("mass", &data.mass, 0.05f, 0.01f, 100.0f, "%.2f");
 }
 
 void RigidBody::applyForce(glm::vec3 a_force)
@@ -58,4 +58,35 @@ void RigidBody::applyForceToActor(RigidBody * a_pActor2, glm::vec3 a_force)
 {
 	a_pActor2->applyForce(a_force);
 	applyForce(-a_force);
+}
+
+glm::vec3 RigidBody::predictPosition(float a_time, float a_angle, float a_speed, glm::vec3 a_gravity)
+{
+	glm::vec3 result(0.0f);
+	// calculate velocity
+	glm::vec3 velocity(a_speed * cos(a_angle), a_speed * sin(a_angle), 0.0f);
+	//
+	result = predictPosition(a_time, velocity, a_gravity);
+
+	return result;
+}
+
+glm::vec3 RigidBody::predictPosition(float a_time, glm::vec3 a_velocity, glm::vec3 a_gravity)
+{
+	glm::vec3 result(0.0f);
+
+	result.x = (data.startPosition.x + (a_velocity.x * a_time));
+	result.y = (data.startPosition.y + (a_velocity.y * a_time)) + ((a_gravity.y * 0.5) * (a_time * a_time));
+
+	return result;
+}
+
+glm::vec3 RigidBody::predictPosition(float a_time, glm::vec3 a_gravity)
+{
+	glm::vec3 result(0.0f);
+
+	result.x = (data.startPosition.x + (data.startVelocity.x * a_time));
+	result.y = (data.startPosition.y + (data.startVelocity.y * a_time)) + ((a_gravity.y * 0.5) * (a_time * a_time));
+
+	return result;
 }
