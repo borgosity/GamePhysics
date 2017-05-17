@@ -515,12 +515,12 @@ void PhysicsApp::demo5(float a_dt)
 	if (m_render2D && !m_render3D) {
 		if (!m_renderChosen) {
 			// world objects
-			m_sphereA = new Sphere(glm::vec3(20.0f, 20.0f, 0.0f), glm::vec3(0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
-			m_sphereB = new Sphere(glm::vec3(-20.0f, 20.0f, 0.0f), glm::vec3(0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
-			m_planeA = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 200.0f,true);
+			m_sphereA = new Sphere(glm::vec3(20.0f, 20.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
+			m_sphereB = new Sphere(glm::vec3(-20.0f, 20.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
+			m_planeA = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 50.0f,true);
 			//m_planeB = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 200.0f, true);
 			m_physicsScene->addActor(m_sphereA);
-			m_physicsScene->addActor(m_sphereB);
+			//m_physicsScene->addActor(m_sphereB);
 			m_physicsScene->addActor(m_planeA);
 			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
 			m_renderChosen = true;
@@ -534,14 +534,14 @@ void PhysicsApp::demo5(float a_dt)
 			// world objects
 			m_sphereA = new Sphere(glm::vec3(5.0f, 5.0f, 0.0f), glm::vec3(0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1));
 			m_sphereB = new Sphere(glm::vec3(-5.0f, 5.0f, 0.0f), glm::vec3(0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1));
-			m_planeA = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 200.0f);
+			m_planeA = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 50.0f);
 			//m_planeB = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 200.0f, true);
 			m_physicsScene->addActor(m_sphereA);
-			m_physicsScene->addActor(m_sphereB);
+			//m_physicsScene->addActor(m_sphereB);
 			m_physicsScene->addActor(m_planeA);
 			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
 			m_renderChosen = true;
 		}
-		m_physicsScene->checkCollisions();
+		//m_physicsScene->checkCollisions();
 	}
 }

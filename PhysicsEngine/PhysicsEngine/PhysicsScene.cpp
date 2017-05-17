@@ -122,7 +122,7 @@ bool PhysicsScene::sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_s
 		float distance = glm::distance(sphereA->getPosition(), sphereB->getPosition());
 		float totalRadius = sphereA->getRadius() + sphereA->getRadius();
 		// compare distance between centers to combined radius
-		if (distance > totalRadius) {
+		if (distance < totalRadius) {
 			// object colliding yes, stop objects
 			sphereA->setVelocity(glm::vec3(0.0f));
 			sphereB->setVelocity(glm::vec3(0.0f));
@@ -138,18 +138,23 @@ bool PhysicsScene::sphereToPlane(PhysicsObject * a_sphere, PhysicsObject * a_pla
 	Plane * plane = (Plane*)a_plane;
 	// check if objects aren't null before testing
 	if (sphere != nullptr && plane != nullptr) {
-		glm::vec3 collNorm = plane->getNormal();
+		
+		glm::vec3 planeNorm = plane->getNormal();
 
-		float gap = glm::dot(sphere->getPosition(), plane->getNormal() - plane->getDistance());
-		std::cout << " Sphere to Plane gap = " << gap << std::endl;
-		// flip normals if behind
-		if (gap < 0) {
-			collNorm *= -1;
-			gap *= -1;
-		}
-		// check sphere for collision
-		float intersection = sphere->getRadius() - gap;
-		if (intersection > 0) {
+		// drop a line from sphere to plane
+		glm::vec3 centerPoint(planeNorm * sphere->getPosition());
+		std::cout << " Center point = " << centerPoint.x << ", " << centerPoint.y << std::endl;
+		glm::vec3 parallel(centerPoint.y, -centerPoint.x, 0.0f);
+		std::cout << " Parallel point = " << parallel.x << ", " << parallel.y << std::endl;
+		glm::vec3 collisionPoint = planeNorm + parallel;
+
+		float cpDistance = glm::distance(sphere->getPosition(), collisionPoint);
+		std::cout << " Collision point = " << collisionPoint.x << ", " << collisionPoint.y << std::endl;
+		std::cout << " Collision point distance = " << cpDistance << std::endl;
+		//float gapToCenter = glm::distance(sphere->getPosition(), collisionPoint);
+		//std::cout << " Plane center distance = " << gapToCenter << std::endl;
+
+		if (cpDistance < sphere->getRadius()) {
 			// object colliding, stop object
 			sphere->setVelocity(glm::vec3(0.0f));
 			return true;
