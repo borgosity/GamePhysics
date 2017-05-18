@@ -118,14 +118,40 @@ bool PhysicsScene::sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_s
 	Sphere * sphereB = (Sphere*)a_sphereB;
 	// check if objects aren't null before testing
 	if (sphereA != nullptr && sphereB != nullptr) {
+		glm::vec3 delta = sphereB->getPosition() - sphereA->getPosition();
+		bool kinematicA = sphereA->rigidbody()->data.isKinematic;
+		bool kinematicB = sphereB->rigidbody()->data.isKinematic;
 		// check sphere for collision
 		float distance = glm::distance(sphereA->getPosition(), sphereB->getPosition());
-		float totalRadius = sphereA->getRadius() + sphereA->getRadius();
+		float totalRadius = sphereA->getRadius() + sphereB->getRadius();
 		// compare distance between centers to combined radius
 		if (distance < totalRadius) {
-			// object colliding yes, stop objects
-			sphereA->setVelocity(glm::vec3(0.0f));
-			sphereB->setVelocity(glm::vec3(0.0f));
+			if (kinematicA || kinematicB) {
+				glm::vec3 collisionNormal = glm::normalize(delta);
+				glm::vec3 relativeVelocity = sphereA->getVelocity() - sphereB->getVelocity();
+				glm::vec3 collisionVector = collisionNormal * (glm::dot(relativeVelocity, collisionNormal));
+				glm::vec3 forceVector = collisionVector * 1.0f / (1.0f / sphereA->rigidbody()->data.mass + 1.0f / sphereB->rigidbody()->data.mass);
+				// use Newton's third law to apply collision forces 
+				// to colliding bodies 
+				sphereA->rigidbody()->applyForceToActor(sphereB->rigidbody(), forceVector*2.0f);
+				// move out spheres out of collision 
+				glm::vec3 separationVector = collisionNormal * distance * 0.5f;
+				if (kinematicA) {
+					sphereA->setPosition(sphereA->getPosition() - separationVector);
+				}
+				if (kinematicB) {
+					sphereB->setPosition(sphereB->getPosition() + separationVector);
+				}
+			}
+			else {
+				// object colliding yes, stop objects
+				sphereA->setVelocity(glm::vec3(0.0f));
+				sphereB->setVelocity(glm::vec3(0.0f));
+				if (sphereA->rigidbody()->data.onGround || sphereB->rigidbody()->data.onGround) {
+					sphereA->rigidbody()->data.onGround = true;
+					sphereB->rigidbody()->data.onGround = true;
+				}
+			}
 			return true;
 		}
 	}
@@ -138,25 +164,37 @@ bool PhysicsScene::sphereToPlane(PhysicsObject * a_sphere, PhysicsObject * a_pla
 	Plane * plane = (Plane*)a_plane;
 	// check if objects aren't null before testing
 	if (sphere != nullptr && plane != nullptr) {
-		
-		glm::vec3 planeNorm = plane->getNormal();
+		bool kinematic = sphere->rigidbody()->data.isKinematic;
+		glm::vec3 collisionNorm = plane->getNormal();
+		float planeDO = plane->getDistance();
 
-		// drop a line from sphere to plane
-		glm::vec3 centerPoint(planeNorm * sphere->getPosition());
-		std::cout << " Center point = " << centerPoint.x << ", " << centerPoint.y << std::endl;
-		glm::vec3 parallel(centerPoint.y, -centerPoint.x, 0.0f);
-		std::cout << " Parallel point = " << parallel.x << ", " << parallel.y << std::endl;
-		glm::vec3 collisionPoint = planeNorm + parallel;
+		float gap = (dot(sphere->getPosition(), collisionNorm));
 
-		float cpDistance = glm::distance(sphere->getPosition(), collisionPoint);
-		std::cout << " Collision point = " << collisionPoint.x << ", " << collisionPoint.y << std::endl;
-		std::cout << " Collision point distance = " << cpDistance << std::endl;
-		//float gapToCenter = glm::distance(sphere->getPosition(), collisionPoint);
-		//std::cout << " Plane center distance = " << gapToCenter << std::endl;
+		// if planeNorm is below 0 gap will be negative
+		if (gap < 0)
+		{
+			collisionNorm *= -1;
+			gap *= -1;
+		}
 
-		if (cpDistance < sphere->getRadius()) {
-			// object colliding, stop object
-			sphere->setVelocity(glm::vec3(0.0f));
+		float collision = gap - sphere->getRadius();
+
+		if (collision < 0.0f) {
+			if (kinematic) {
+				glm::vec3 planeNorm = plane->getNormal();
+				if (gap < 0)
+				{
+					planeNorm *= -1;
+				}
+				glm::vec3 forceVector = -1 * sphere->rigidbody()->data.mass * planeNorm * (glm::dot(planeNorm, sphere->getVelocity()));
+				sphere->rigidbody()->applyForce(2.0f * forceVector);
+				//sphere->setPosition(sphere->getPosition() + collisionNorm * collision * 0.5f);
+			}
+			else {
+				// object colliding, stop object
+				sphere->setVelocity(glm::vec3(0.0f));
+				sphere->rigidbody()->data.onGround = true;
+			}
 			return true;
 		}
 	}
@@ -172,7 +210,7 @@ void PhysicsScene::update(float a_dt)
 		timer -= m_timeStep;
 		// update all
 		for (auto actor : m_actors) {
-			actor->fixedUpdate(m_gravity, a_dt);
+				actor->fixedUpdate( properties.gravity ? m_gravity : glm::vec3(0.0f), a_dt);
 		}
 		// if apply for was selected
 		if (m_applyForce) {
@@ -197,6 +235,10 @@ void PhysicsScene::update(float a_dt)
 			// set actors back to nullptr
 			m_pActorA = nullptr; 
 			m_pActorB = nullptr;
+		}
+		// check for collisions
+		if (properties.collisions) {
+			checkCollisions();
 		}
 	}
 }

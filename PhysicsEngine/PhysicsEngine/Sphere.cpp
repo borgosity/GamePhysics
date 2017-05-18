@@ -39,9 +39,9 @@ void Sphere::debug()
 void Sphere::makeGizmo()
 {
 	if (m_2D) {
-		aie::Gizmos::add2DCircle(glm::vec2(m_rigidbody->data.position.x, m_rigidbody->data.position.y), m_radius, 8, m_colour);
+		aie::Gizmos::add2DCircle(glm::vec2(m_rigidbody->data.position.x, m_rigidbody->data.position.y), m_radius, 12, m_colour);
 	}
 	else {
-		aie::Gizmos::addSphere(m_rigidbody->data.position, m_radius, 8, 8, m_colour);
+		aie::Gizmos::addSphere(m_rigidbody->data.position, m_radius, 12, 12, m_colour);
 	}
 }

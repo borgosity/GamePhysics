@@ -2,6 +2,12 @@
 #include <vector>
 #include "glm\glm.hpp"
 
+struct PhysicsProperties {
+	bool gravity = false;
+	bool collisions = false;
+	bool collisionResponse = false;
+};
+
 class PhysicsObject;
 
 class PhysicsScene
@@ -31,6 +37,9 @@ public:
 	static bool planeToSphere(PhysicsObject *  a_plane, PhysicsObject * a_sphere);
 	static bool sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_sphereB);
 	static bool sphereToPlane(PhysicsObject * a_sphere, PhysicsObject * a_plane);
+
+	// scene properties
+	PhysicsProperties properties;
 
 protected:
 	glm::vec3	m_gravity;

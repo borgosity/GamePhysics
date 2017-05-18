@@ -35,7 +35,11 @@ RigidBody::~RigidBody()
 
 void RigidBody::fixedUpdate(glm::vec3 gravity, float timeStep)
 {
-	applyForce(gravity * data.mass * timeStep);
+	glm::vec3 totalGavity(data.onGround ? glm::vec3(0.0f) : gravity);
+	applyForce(totalGavity * data.mass * timeStep);
+	if (data.isKinematic) {
+		data.velocity *= data.linearDrag;
+	}
 	data.position += data.velocity * timeStep;
 }
 
@@ -47,6 +51,8 @@ void RigidBody::debug()
 	ImGui::DragFloat3("velocity", glm::value_ptr(data.velocity), 0.05f, -100.0f, 100.0f, "%.2f");
 	ImGui::DragFloat3("rotation", glm::value_ptr(data.rotation), 0.05f, -100.0f, 100.0f, "%.2f");
 	ImGui::DragFloat("mass", &data.mass, 0.05f, 0.01f, 100.0f, "%.2f");
+	ImGui::Checkbox("isKinematic", &data.isKinematic);
+	ImGui::Checkbox("onGround", &data.onGround);
 }
 
 void RigidBody::applyForce(glm::vec3 a_force)

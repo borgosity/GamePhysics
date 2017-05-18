@@ -60,15 +60,18 @@ private:
 	glm::mat4	m_projectionMatrix;
 
 	// demos
+	// -- demo 1 --
 	DemoType m_demo;
 	void demo1();
+	// -- demo 2 --
 	// add force demo
 	void demo2();
+	// -- demo 3 --
 	// rocket demo
 	Sphere * m_rocket = nullptr;
 	float m_burnTime;
 	void demo3(float a_dt);
-
+	// -- demo 4 --
 	// projectile demo
 	PhysicsScene * m_demo4Scene = nullptr;
 	Sphere * m_projectile = nullptr;
@@ -77,14 +80,16 @@ private:
 	float m_angle;
 	float m_speed;
 	void demo4(float a_dt);
-
+	// -- demo 5 --
 	// collision detection
 	Sphere * m_sphereA = nullptr;
 	Sphere * m_sphereB = nullptr;
+	Sphere * m_sphereC = nullptr;
 	Plane * m_planeA = nullptr;
 	Plane * m_planeB = nullptr;
-
 	void demo5(float a_dt);
-
+	// -- demo 6 --
+	// collision response
+	void demo6(float a_dt);
 };
 

@@ -17,7 +17,7 @@ public:
 	virtual void makeGizmo();
 	// get/set
 	virtual glm::vec3 getPosition() override { return m_position; };
-	void setPosition(glm::vec3 a_position);
+	//virtual  void setPosition(glm::vec3 a_position) override;
 	glm::vec3 getNormal() { return m_normal; }
 	float getDistance() { return m_distanceToOrigin; }
 

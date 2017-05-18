@@ -48,21 +48,36 @@ void Plane::makeGizmo()
 		float lineLength = m_distanceToOrigin;
 		glm::vec2 centerPoint(m_normal.x, m_normal.y);
 		glm::vec2 parallel(m_normal.y, -m_normal.x);
+		// set colour
 		glm::vec4 colour(0.0f, 0.5f, 1.0f, 1.0f);
+		// define start and end point
 		glm::vec2 start = centerPoint + (parallel * lineLength);
 		glm::vec2 end = centerPoint - (parallel * lineLength);
+		// add line
 		aie::Gizmos::add2DLine(start, end, colour);
 	}
 	else {
+		float lineLength = m_distanceToOrigin;
+		glm::vec3 centerPoint(m_normal);
+		glm::vec3 parallel(m_normal.y, -m_normal.x, m_normal.z);
+		glm::vec3 start = centerPoint + (parallel * lineLength);
+		glm::vec3 end = centerPoint - (parallel * lineLength);
 		// draw a simple grid with gizmos
 		glm::vec4 blue(0.0f, 0.5f, 1.0f, 1.0f);
-		for (int i = 0; i < 21; ++i) {
-			aie::Gizmos::addLine(glm::vec3(-10 + i, 0, 10),
-								glm::vec3(-10 + i, 0, -10),
-								blue);
-			aie::Gizmos::addLine(glm::vec3(10, 0, -10 + i),
-								glm::vec3(-10, 0, -10 + i),
-								blue);
+		glm::vec4 lightBlue(0.0f, 0.75f, 1.0f, 1.0f);
+
+		int offset = parallel.y;
+		int count = lineLength * 2 + 1;
+		int length = lineLength;
+		for (int i = 0; i < count; ++i) {
+			// draw on the Z plane, increment along the X
+			aie::Gizmos::addLine(glm::vec3(-lineLength + i, 0, lineLength),
+				glm::vec3(-lineLength + i, 0, -lineLength),
+				i == lineLength ? blue : lightBlue);
+			// draw on the X plane, increment into the Z
+			aie::Gizmos::addLine(glm::vec3(lineLength, 0, -lineLength + i),
+				glm::vec3(-lineLength, 0, -lineLength + i),
+				i == lineLength ? blue : lightBlue);
 		}
 	}
 }

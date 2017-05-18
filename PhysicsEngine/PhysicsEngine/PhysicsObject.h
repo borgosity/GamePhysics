@@ -23,6 +23,9 @@ public:
 	// get /set
 	int getShapeID() { return m_shapeID; }
 	virtual glm::vec3 getPosition();
+	virtual glm::vec3 getVelocity();
+
+	virtual void setPosition(glm::vec3 a_position);
 	virtual void setVelocity(glm::vec3 a_velocity);
 	RigidBody * rigidbody() { return m_rigidbody; }
 	bool toggle2D() { m_2D = !m_2D; return m_2D; }

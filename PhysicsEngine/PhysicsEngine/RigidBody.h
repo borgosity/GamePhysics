@@ -2,12 +2,19 @@
 #include "glm\glm.hpp"
 
 struct RigidBodyData {
+	glm::vec3 angularVelocity;
 	glm::vec3 velocity;
 	glm::vec3 startVelocity;
 	glm::vec3 position;
 	glm::vec3 startPosition;
 	glm::vec3 rotation;
 	float mass;
+	bool onGround = false;
+	bool isKinematic = false;
+	// friction
+	float linearDrag = 0.1f;
+	float angularDrag = 0.0f;
+	float elasticity = 0.0f;  // lower numbers are force absorbant
 };
 
 
