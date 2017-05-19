@@ -3,6 +3,7 @@
 #include "RigidBody.h"
 #include "Sphere.h"
 #include "Plane.h"
+#include "Box.h"
 
 #include <string>
 #include <iostream>
@@ -15,8 +16,9 @@
 typedef bool(*fn)(PhysicsObject*, PhysicsObject*);
 
 static fn collisionFuncs[] = {
-	PhysicsScene::planeToPlane, PhysicsScene::planeToSphere,
-	PhysicsScene::sphereToPlane, PhysicsScene::sphereToSphere
+	PhysicsScene::planeToPlane, PhysicsScene::planeToSphere, PhysicsScene::planeToBox,
+	PhysicsScene::sphereToPlane, PhysicsScene::sphereToSphere, PhysicsScene::sphereToBox,
+	PhysicsScene::boxToPlane, PhysicsScene::boxToSphere, PhysicsScene::boxToBox
 };
 
 PhysicsScene::PhysicsScene()
@@ -112,6 +114,11 @@ bool PhysicsScene::planeToSphere(PhysicsObject * a_plane, PhysicsObject * a_sphe
 	return sphereToPlane(a_sphere, a_plane);
 }
 
+bool PhysicsScene::planeToBox(PhysicsObject * a_plane, PhysicsObject * a_box)
+{
+	return boxToPlane(a_box, a_plane);;
+}
+
 bool PhysicsScene::sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_sphereB)
 {
 	Sphere * sphereA = (Sphere*)a_sphereA;
@@ -121,6 +128,8 @@ bool PhysicsScene::sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_s
 		glm::vec3 delta = sphereB->getPosition() - sphereA->getPosition();
 		bool kinematicA = sphereA->rigidbody()->data.isKinematic;
 		bool kinematicB = sphereB->rigidbody()->data.isKinematic;
+		bool onGroundA = sphereA->rigidbody()->data.onGround;
+		bool onGroundB = sphereB->rigidbody()->data.onGround;
 		// check sphere for collision
 		float distance = glm::distance(sphereA->getPosition(), sphereB->getPosition());
 		float totalRadius = sphereA->getRadius() + sphereB->getRadius();
@@ -128,26 +137,40 @@ bool PhysicsScene::sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_s
 		if (distance < totalRadius) {
 			if (kinematicA || kinematicB) {
 				glm::vec3 collisionNormal = glm::normalize(delta);
-				glm::vec3 relativeVelocity = sphereA->getVelocity() - sphereB->getVelocity();
-				glm::vec3 collisionVector = collisionNormal * (glm::dot(relativeVelocity, collisionNormal));
-				glm::vec3 forceVector = collisionVector * 1.0f / (1.0f / sphereA->rigidbody()->data.mass + 1.0f / sphereB->rigidbody()->data.mass);
-				// use Newton's third law to apply collision forces 
-				// to colliding bodies 
-				sphereA->rigidbody()->applyForceToActor(sphereB->rigidbody(), forceVector*2.0f);
-				// move out spheres out of collision 
-				glm::vec3 separationVector = collisionNormal * distance * 0.5f;
-				if (kinematicA) {
+				// if both spheres are not on the ground
+				if (!onGroundA && !onGroundB) {
+					// calculate force vector
+					glm::vec3 relativeVelocity = sphereA->getVelocity() - sphereB->getVelocity();
+					glm::vec3 collisionVector = collisionNormal * (glm::dot(relativeVelocity, collisionNormal));
+					glm::vec3 forceVector = collisionVector * 1.0f / (1.0f / sphereA->rigidbody()->data.mass + 1.0f / sphereB->rigidbody()->data.mass);
+					// use Newton's third law to apply collision forces to colliding bodies 
+					sphereA->rigidbody()->applyForceToActor(sphereB->rigidbody(), forceVector * 2.0f);
+					// move out spheres out of collision 
+					glm::vec3 separationVector = collisionNormal * distance * 0.5f;
 					sphereA->setPosition(sphereA->getPosition() - separationVector);
-				}
-				if (kinematicB) {
 					sphereB->setPosition(sphereB->getPosition() + separationVector);
+				}
+				// if one sphere is on the ground treat collsion as plane collision
+				if (onGroundA || onGroundB) {
+					// determine moving sphere
+					Sphere * sphere = (onGroundA ? sphereB : sphereA);
+					Sphere * sphereGround = (onGroundA ? sphereA : sphereB);
+					// calculate force vector
+					glm::vec3 forceVector = -1 * sphere->rigidbody()->data.mass * collisionNormal * (glm::dot(collisionNormal, sphere->getVelocity()));
+					// apply force
+					sphere->rigidbody()->applyForce(forceVector * 2.0f);
+					// move out of collision
+					glm::vec3 separationVector = collisionNormal * distance * 0.5f;
+					sphere->setPosition(sphere->getPosition() - separationVector);
+					// stop other sphere from being on ground
+					sphereGround->rigidbody()->data.onGround = false;
 				}
 			}
 			else {
 				// object colliding yes, stop objects
 				sphereA->setVelocity(glm::vec3(0.0f));
 				sphereB->setVelocity(glm::vec3(0.0f));
-				if (sphereA->rigidbody()->data.onGround || sphereB->rigidbody()->data.onGround) {
+				if (onGroundA || onGroundB) {
 					sphereA->rigidbody()->data.onGround = true;
 					sphereB->rigidbody()->data.onGround = true;
 				}
@@ -187,13 +210,195 @@ bool PhysicsScene::sphereToPlane(PhysicsObject * a_sphere, PhysicsObject * a_pla
 					planeNorm *= -1;
 				}
 				glm::vec3 forceVector = -1 * sphere->rigidbody()->data.mass * planeNorm * (glm::dot(planeNorm, sphere->getVelocity()));
-				sphere->rigidbody()->applyForce(2.0f * forceVector);
-				//sphere->setPosition(sphere->getPosition() + collisionNorm * collision * 0.5f);
+				// only bounce if not resting on the ground
+				if (!sphere->rigidbody()->data.onGround) {
+					sphere->rigidbody()->applyForce(2.0f * forceVector);
+					// move out of collision
+					glm::vec3 separationVector = collisionNorm * collision * 0.5f;
+					sphere->setPosition(sphere->getPosition() - separationVector);
+				}
 			}
 			else {
 				// object colliding, stop object
 				sphere->setVelocity(glm::vec3(0.0f));
 				sphere->rigidbody()->data.onGround = true;
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+bool PhysicsScene::sphereToBox(PhysicsObject * a_sphere, PhysicsObject * a_box)
+{
+	return boxToSphere(a_box, a_sphere);
+}
+
+bool PhysicsScene::boxToSphere(PhysicsObject * a_box, PhysicsObject * a_sphere)
+{
+	Box * box = (Box*)a_box;
+	Sphere * sphere = (Sphere*)a_sphere;
+	// check if objects aren't null before testing
+	if (box != nullptr && sphere != nullptr) {
+		glm::vec3 delta = sphere->getPosition() - box->getPosition();
+		bool kinematicA = box->rigidbody()->data.isKinematic;
+		bool kinematicB = sphere->rigidbody()->data.isKinematic;
+		bool onGroundA = box->rigidbody()->data.onGround;
+		bool onGroundB = sphere->rigidbody()->data.onGround;
+		// check box for collision
+		float distance = glm::distance(box->getPosition(), sphere->getPosition());
+		float totalRadius = box->getSize() + sphere->getRadius();
+		// compare distance between centers to combined radius
+		if (distance < totalRadius) {
+			if (kinematicA || kinematicB) {
+				glm::vec3 collisionNormal = glm::normalize(delta);
+				// if both boxs are not on the ground
+				if (!onGroundA && !onGroundB) {
+					// calculate force vector
+					glm::vec3 relativeVelocity = box->getVelocity() - sphere->getVelocity();
+					glm::vec3 collisionVector = collisionNormal * (glm::dot(relativeVelocity, collisionNormal));
+					glm::vec3 forceVector = collisionVector * 1.0f / (1.0f / box->rigidbody()->data.mass + 1.0f / sphere->rigidbody()->data.mass);
+					// use Newton's third law to apply collision forces to colliding bodies 
+					box->rigidbody()->applyForceToActor(sphere->rigidbody(), forceVector * 2.0f);
+					// move out boxs out of collision 
+					glm::vec3 separationVector = collisionNormal * distance * 0.5f;
+					box->setPosition(box->getPosition() - separationVector);
+					sphere->setPosition(sphere->getPosition() + separationVector);
+				}
+				// if one box is on the ground treat collsion as plane collision
+				if (onGroundA || onGroundB) {
+					// determine moving box
+					PhysicsObject * obj = (onGroundA ? (PhysicsObject*)sphere : (PhysicsObject*)box);
+					PhysicsObject * objGround = (onGroundA ? (PhysicsObject*)box : (PhysicsObject*)sphere);
+					// calculate force vector
+					glm::vec3 forceVector = -1 * obj->rigidbody()->data.mass * collisionNormal * (glm::dot(collisionNormal, obj->getVelocity()));
+					// apply force
+					obj->rigidbody()->applyForce(forceVector * 2.0f);
+					// move out of collision
+					glm::vec3 separationVector = collisionNormal * distance * 0.5f;
+					obj->setPosition(obj->getPosition() - separationVector);
+					// stop other box from being on ground
+					objGround->rigidbody()->data.onGround = false;
+				}
+			}
+			else {
+				// object colliding yes, stop objects
+				box->setVelocity(glm::vec3(0.0f));
+				sphere->setVelocity(glm::vec3(0.0f));
+				if (onGroundA || onGroundB) {
+					box->rigidbody()->data.onGround = true;
+					sphere->rigidbody()->data.onGround = true;
+				}
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+bool PhysicsScene::boxToPlane(PhysicsObject * a_sphere, PhysicsObject * a_plane)
+{
+	Box * sphere = (Box*)a_sphere;
+	Plane * plane = (Plane*)a_plane;
+	// check if objects aren't null before testing
+	if (sphere != nullptr && plane != nullptr) {
+		bool kinematic = sphere->rigidbody()->data.isKinematic;
+		glm::vec3 collisionNorm = plane->getNormal();
+		float planeDO = plane->getDistance();
+
+		float gap = (dot(sphere->getPosition(), collisionNorm));
+
+		// if planeNorm is below 0 gap will be negative
+		if (gap < 0)
+		{
+			collisionNorm *= -1;
+			gap *= -1;
+		}
+
+		float collision = gap - sphere->getSize();
+
+		if (collision < 0.0f) {
+			if (kinematic) {
+				glm::vec3 planeNorm = plane->getNormal();
+				if (gap < 0)
+				{
+					planeNorm *= -1;
+				}
+				glm::vec3 forceVector = -1 * sphere->rigidbody()->data.mass * planeNorm * (glm::dot(planeNorm, sphere->getVelocity()));
+				// only bounce if not resting on the ground
+				if (!sphere->rigidbody()->data.onGround) {
+					sphere->rigidbody()->applyForce(2.0f * forceVector);
+					// move out of collision
+					glm::vec3 separationVector = collisionNorm * collision * 0.5f;
+					sphere->setPosition(sphere->getPosition() - separationVector);
+				}
+			}
+			else {
+				// object colliding, stop object
+				sphere->setVelocity(glm::vec3(0.0f));
+				sphere->rigidbody()->data.onGround = true;
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+bool PhysicsScene::boxToBox(PhysicsObject * a_boxA, PhysicsObject * a_boxB)
+{
+	Box * boxA = (Box*)a_boxA;
+	Box * boxB = (Box*)a_boxB;
+	// check if objects aren't null before testing
+	if (boxA != nullptr && boxB != nullptr) {
+		glm::vec3 delta = boxB->getPosition() - boxA->getPosition();
+		bool kinematicA = boxA->rigidbody()->data.isKinematic;
+		bool kinematicB = boxB->rigidbody()->data.isKinematic;
+		bool onGroundA = boxA->rigidbody()->data.onGround;
+		bool onGroundB = boxB->rigidbody()->data.onGround;
+		// check box for collision
+		float distance = glm::distance(boxA->getPosition(), boxB->getPosition());
+		float totalRadius = boxA->getSize() + boxB->getSize();
+		// compare distance between centers to combined radius
+		if (distance < totalRadius) {
+			if (kinematicA || kinematicB) {
+				glm::vec3 collisionNormal = glm::normalize(delta);
+				// if both boxs are not on the ground
+				if (!onGroundA && !onGroundB) {
+					// calculate force vector
+					glm::vec3 relativeVelocity = boxA->getVelocity() - boxB->getVelocity();
+					glm::vec3 collisionVector = collisionNormal * (glm::dot(relativeVelocity, collisionNormal));
+					glm::vec3 forceVector = collisionVector * 1.0f / (1.0f / boxA->rigidbody()->data.mass + 1.0f / boxB->rigidbody()->data.mass);
+					// use Newton's third law to apply collision forces to colliding bodies 
+					boxA->rigidbody()->applyForceToActor(boxB->rigidbody(), forceVector * 2.0f);
+					// move out boxs out of collision 
+					glm::vec3 separationVector = collisionNormal * distance * 0.5f;
+					boxA->setPosition(boxA->getPosition() - separationVector);
+					boxB->setPosition(boxB->getPosition() + separationVector);
+				}
+				// if one box is on the ground treat collsion as plane collision
+				if (onGroundA || onGroundB) {
+					// determine moving box
+					Box * box = (onGroundA ? boxB : boxA);
+					Box * boxGround = (onGroundA ? boxA : boxB);
+					// calculate force vector
+					glm::vec3 forceVector = -1 * box->rigidbody()->data.mass * collisionNormal * (glm::dot(collisionNormal, box->getVelocity()));
+					// apply force
+					box->rigidbody()->applyForce(forceVector * 2.0f);
+					// move out of collision
+					glm::vec3 separationVector = collisionNormal * distance * 0.5f;
+					box->setPosition(box->getPosition() - separationVector);
+					// stop other box from being on ground
+					boxGround->rigidbody()->data.onGround = false;
+				}
+			}
+			else {
+				// object colliding yes, stop objects
+				boxA->setVelocity(glm::vec3(0.0f));
+				boxB->setVelocity(glm::vec3(0.0f));
+				if (onGroundA || onGroundB) {
+					boxA->rigidbody()->data.onGround = true;
+					boxB->rigidbody()->data.onGround = true;
+				}
 			}
 			return true;
 		}
@@ -210,7 +415,9 @@ void PhysicsScene::update(float a_dt)
 		timer -= m_timeStep;
 		// update all
 		for (auto actor : m_actors) {
+			if (actor != nullptr) {
 				actor->fixedUpdate( properties.gravity ? m_gravity : glm::vec3(0.0f), a_dt);
+			}
 		}
 		// if apply for was selected
 		if (m_applyForce) {

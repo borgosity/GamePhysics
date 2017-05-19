@@ -37,7 +37,7 @@ void RigidBody::fixedUpdate(glm::vec3 gravity, float timeStep)
 {
 	glm::vec3 totalGavity(data.onGround ? glm::vec3(0.0f) : gravity);
 	applyForce(totalGavity * data.mass * timeStep);
-	if (data.isKinematic) {
+	if (data.isKinematic && data.onGround) {
 		data.velocity *= data.linearDrag;
 	}
 	data.position += data.velocity * timeStep;
@@ -62,8 +62,12 @@ void RigidBody::applyForce(glm::vec3 a_force)
 
 void RigidBody::applyForceToActor(RigidBody * a_pActor2, glm::vec3 a_force)
 {
-	a_pActor2->applyForce(a_force);
-	applyForce(-a_force);
+	if (!a_pActor2->data.onGround) {
+		a_pActor2->applyForce(a_force);
+	}
+	if (data.onGround) {
+		applyForce(-a_force);
+	}
 }
 
 glm::vec3 RigidBody::predictPosition(float a_time, float a_angle, float a_speed, glm::vec3 a_gravity)

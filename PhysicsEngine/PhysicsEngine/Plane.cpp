@@ -51,8 +51,8 @@ void Plane::makeGizmo()
 		// set colour
 		glm::vec4 colour(0.0f, 0.5f, 1.0f, 1.0f);
 		// define start and end point
-		glm::vec2 start = centerPoint + (parallel * lineLength);
-		glm::vec2 end = centerPoint - (parallel * lineLength);
+		glm::vec2 start = centerPoint + (parallel * 100.0f);
+		glm::vec2 end = centerPoint - (parallel * 100.0f);
 		// add line
 		aie::Gizmos::add2DLine(start, end, colour);
 	}
@@ -60,24 +60,30 @@ void Plane::makeGizmo()
 		float lineLength = m_distanceToOrigin;
 		glm::vec3 centerPoint(m_normal);
 		glm::vec3 parallel(m_normal.y, -m_normal.x, m_normal.z);
-		glm::vec3 start = centerPoint + (parallel * lineLength);
-		glm::vec3 end = centerPoint - (parallel * lineLength);
+		glm::vec3 start = /*centerPoint*/ + (parallel * lineLength);
+		glm::vec3 end = /*centerPoint*/ - (parallel * lineLength);
 		// draw a simple grid with gizmos
 		glm::vec4 blue(0.0f, 0.5f, 1.0f, 1.0f);
 		glm::vec4 lightBlue(0.0f, 0.75f, 1.0f, 1.0f);
 
-		int offset = parallel.y;
+		// calculate number of lines needed
 		int count = lineLength * 2 + 1;
-		int length = lineLength;
+		// determine total difference between start and end points
+		float diff = (start.y - end.y) / (count - 1);
+		// spread difference across line count
+		float incrementY = end.y;
+		// draw gizmos
 		for (int i = 0; i < count; ++i) {
-			// draw on the Z plane, increment along the X
-			aie::Gizmos::addLine(glm::vec3(-lineLength + i, 0, lineLength),
-				glm::vec3(-lineLength + i, 0, -lineLength),
+			// draw on the Z plane, increment along the X, incrementing Y value to gain height
+			aie::Gizmos::addLine(glm::vec3(-lineLength + i, incrementY, lineLength),
+				glm::vec3(-lineLength + i, incrementY, -lineLength),
 				i == lineLength ? blue : lightBlue);
 			// draw on the X plane, increment into the Z
-			aie::Gizmos::addLine(glm::vec3(lineLength, 0, -lineLength + i),
-				glm::vec3(-lineLength, 0, -lineLength + i),
+			aie::Gizmos::addLine(glm::vec3(lineLength, start.y, -lineLength + i),
+				glm::vec3(-lineLength, end.y, -lineLength + i),
 				i == lineLength ? blue : lightBlue);
+			// increment Z plane lines
+			incrementY += diff;
 		}
 	}
 }

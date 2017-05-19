@@ -9,6 +9,7 @@ class PhysicsObject;
 class PhysicsScene;
 class Sphere;
 class Plane;
+class Box;
 
 enum DemoType {
 	DEMO1 = 1,
@@ -85,6 +86,9 @@ private:
 	Sphere * m_sphereA = nullptr;
 	Sphere * m_sphereB = nullptr;
 	Sphere * m_sphereC = nullptr;
+	Box * m_boxA = nullptr;
+	Box * m_boxB = nullptr;
+	Box * m_boxC = nullptr;
 	Plane * m_planeA = nullptr;
 	Plane * m_planeB = nullptr;
 	void demo5(float a_dt);

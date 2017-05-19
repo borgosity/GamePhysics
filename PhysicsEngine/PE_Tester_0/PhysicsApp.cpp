@@ -18,6 +18,7 @@
 #include "PhysicsScene.h"
 #include "Sphere.h"
 #include "Plane.h"
+#include "Box.h"
 #include "GameDef.h"
 
 PhysicsApp::PhysicsApp()
@@ -307,18 +308,20 @@ void PhysicsApp::draw3D()
 	float aspect = getWindowWidth() / (float)getWindowHeight();
 	m_projectionMatrix = glm::perspective(fovy, aspect,	0.1f, 1000.f);
 
-	// draw a simple grid with gizmos
-	glm::vec4 white(1.0f);
-	glm::vec4 grey(0.5f, 0.5f, 0.5f, 1.0f);
-	for (int i = 0; i < 21; ++i) {
-		// draw on the Z plane, increment along the X
-		aie::Gizmos::addLine(glm::vec3(-10 + i, 0, 10),
-			glm::vec3(-10 + i, 0, -10),
-			i == 10 ? white : grey);
-		// draw on the X plane, increment into the Z
-		aie::Gizmos::addLine(glm::vec3(10, 0, -10 + i),
-			glm::vec3(-10, 0, -10 + i),
-			i == 10 ? white : grey);
+	if (m_demo != DEMO6) {
+		// draw a simple grid with gizmos
+		glm::vec4 white(1.0f);
+		glm::vec4 grey(0.5f, 0.5f, 0.5f, 1.0f);
+		for (int i = 0; i < 21; ++i) {
+			// draw on the Z plane, increment along the X
+			aie::Gizmos::addLine(glm::vec3(-10 + i, 0, 10),
+				glm::vec3(-10 + i, 0, -10),
+				i == 10 ? white : grey);
+			// draw on the X plane, increment into the Z
+			aie::Gizmos::addLine(glm::vec3(10, 0, -10 + i),
+				glm::vec3(-10, 0, -10 + i),
+				i == 10 ? white : grey);
+		}
 	}
 
 	// draw gizmos
@@ -524,11 +527,20 @@ void PhysicsApp::demo5(float a_dt)
 			// world objects
 			m_sphereA = new Sphere(glm::vec3(20.0f, 50.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0, 0, 1), true);
 			m_sphereB = new Sphere(glm::vec3(20.0f, 20.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
-			m_sphereC = new Sphere(glm::vec3(-20.0f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
+			
+			m_boxA = new Box(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
+			m_boxB = new Box(glm::vec3(0.0f, 20.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
+
+			m_boxC = new Box(glm::vec3(-20.0f, 55.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
+			m_sphereC = new Sphere(glm::vec3(-20.0f, 40.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
 			m_planeA = new Plane(glm::vec3(0.25f, -1.0f, 0.0f), 50.0f, true);
 			m_planeB = new Plane(glm::vec3(-0.05f, -1.0f, 0.0f), 50.0f, true);
+
 			m_physicsScene->addActor(m_sphereA);
 			m_physicsScene->addActor(m_sphereB);
+			m_physicsScene->addActor(m_boxA);
+			m_physicsScene->addActor(m_boxB);
+			m_physicsScene->addActor(m_boxC);
 			m_physicsScene->addActor(m_sphereC);
 			m_physicsScene->addActor(m_planeA);
 			//m_physicsScene->addActor(m_planeB);
@@ -544,12 +556,22 @@ void PhysicsApp::demo5(float a_dt)
 	if (m_render3D && !m_render2D) {
 		if (!m_renderChosen) {
 			// world objects
+			// box to box
+			m_boxA = new Box(glm::vec3(0.0f, 10.0f, -3.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 0.2f, 1, 1));
+			m_boxB = new Box(glm::vec3(0.0f, 5.0f, -3.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0.2f, 0, 1));
+			// box to sphere
+			m_boxC = new Box(glm::vec3(1.0f, 15.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0.2f, 1));
 			m_sphereA = new Sphere(glm::vec3(1.0f, 12.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
+			// sphere to sphere
 			m_sphereB = new Sphere(glm::vec3(-5.0f, 5.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
 			m_sphereC = new Sphere(glm::vec3(-5.0f, 10.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0, 1));
+
 			m_planeA = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 20.0f);
 			//m_planeB = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 10.0f);
 			m_physicsScene->addActor(m_sphereA);
+			m_physicsScene->addActor(m_boxA);
+			m_physicsScene->addActor(m_boxB);
+			m_physicsScene->addActor(m_boxC);
 			m_physicsScene->addActor(m_sphereB);
 			m_physicsScene->addActor(m_sphereC);
 			m_physicsScene->addActor(m_planeA);
@@ -570,19 +592,34 @@ void PhysicsApp::demo6(float a_dt)
 	if (m_render2D && !m_render3D) {
 		if (!m_renderChosen) {
 			// world objects
+			// sphere to sphere
 			m_sphereA = new Sphere(glm::vec3(20.0f, 50.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0, 0, 1), true);
 			m_sphereA->rigidbody()->data.isKinematic = true;
-			m_sphereB = new Sphere(glm::vec3(20.0f, 20.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
+			m_sphereB = new Sphere(glm::vec3(20.0f, 10.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
 			m_sphereB->rigidbody()->data.isKinematic = true;
-			m_sphereC = new Sphere(glm::vec3(-20.0f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
+			m_sphereB->rigidbody()->data.onGround = true;
+			// box to box
+			m_boxA = new Box(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
+			m_boxA->rigidbody()->data.isKinematic = true;
+			m_boxB = new Box(glm::vec3(0.0f, 2.5f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
+			m_boxB->rigidbody()->data.isKinematic = true;
+			m_boxB->rigidbody()->data.onGround = true;
+			// box to sphere
+			m_boxC = new Box(glm::vec3(-20.0f, 55.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
+			m_boxC->rigidbody()->data.isKinematic = true;
+			m_sphereC = new Sphere(glm::vec3(-20.0f, 40.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
 			m_sphereC->rigidbody()->data.isKinematic = true;
+			// planes
 			m_planeA = new Plane(glm::vec3(0.25f, -1.0f, 0.0f), 50.0f, true);
 			m_planeB = new Plane(glm::vec3(-0.05f, -1.0f, 0.0f), 50.0f, true);
+
 			m_physicsScene->addActor(m_sphereA);
 			m_physicsScene->addActor(m_sphereB);
+			m_physicsScene->addActor(m_boxA);
+			m_physicsScene->addActor(m_boxB);
+			m_physicsScene->addActor(m_boxC);
 			m_physicsScene->addActor(m_sphereC);
 			m_physicsScene->addActor(m_planeA);
-			//m_physicsScene->addActor(m_planeB);
 
 			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
 			m_physicsScene->properties.gravity = true;
@@ -595,15 +632,30 @@ void PhysicsApp::demo6(float a_dt)
 	if (m_render3D && !m_render2D) {
 		if (!m_renderChosen) {
 			// world objects
-			m_sphereA = new Sphere(glm::vec3(1.0f, 12.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
+			// box to box
+			m_boxA = new Box(glm::vec3(1.0f, 1.25f, -3.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 0.2f, 1, 1));
+			m_boxA->rigidbody()->data.isKinematic = true;
+			m_boxA->rigidbody()->data.onGround = true;
+			m_boxB = new Box(glm::vec3(1.0f, 10.0f, -3.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0.2f, 0, 1));
+			m_boxB->rigidbody()->data.isKinematic = true;
+			// box to sphere
+			m_boxC = new Box(glm::vec3(1.0f, 10.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0.2f, 1));
+			m_boxC->rigidbody()->data.isKinematic = true;
+			m_sphereA = new Sphere(glm::vec3(1.0f, 1.25f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
 			m_sphereA->rigidbody()->data.isKinematic = true;
-			m_sphereB = new Sphere(glm::vec3(-5.0f, 5.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
+			m_sphereA->rigidbody()->data.onGround = true;
+			// sphere to sphere
+			m_sphereB = new Sphere(glm::vec3(-5.0f, 10.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
 			m_sphereB->rigidbody()->data.isKinematic = true;
-			m_sphereC = new Sphere(glm::vec3(-5.0f, 10.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0, 1));
+			m_sphereC = new Sphere(glm::vec3(-5.0f, 5.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0, 1));
 			m_sphereC->rigidbody()->data.isKinematic = true;
-			m_planeA = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 20.0f);
+
+			m_planeA = new Plane(glm::vec3(-0.25f, 1.0f, 0.0f), 20.0f);
 			//m_planeB = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 10.0f);
 			m_physicsScene->addActor(m_sphereA);
+			m_physicsScene->addActor(m_boxC);
+			m_physicsScene->addActor(m_boxA);
+			m_physicsScene->addActor(m_boxB);
 			m_physicsScene->addActor(m_sphereB);
 			m_physicsScene->addActor(m_sphereC);
 			m_physicsScene->addActor(m_planeA);

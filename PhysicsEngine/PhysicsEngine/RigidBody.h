@@ -12,7 +12,7 @@ struct RigidBodyData {
 	bool onGround = false;
 	bool isKinematic = false;
 	// friction
-	float linearDrag = 0.1f;
+	float linearDrag = 1.0f;
 	float angularDrag = 0.0f;
 	float elasticity = 0.0f;  // lower numbers are force absorbant
 };

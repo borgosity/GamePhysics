@@ -33,10 +33,18 @@ public:
 	// collision functions
 	void checkCollisions();
 	// collision detection
+	// plane
 	static bool planeToPlane(PhysicsObject * a_planeA, PhysicsObject * a_planeB);
 	static bool planeToSphere(PhysicsObject *  a_plane, PhysicsObject * a_sphere);
+	static bool planeToBox(PhysicsObject *  a_plane, PhysicsObject * a_box);
+	// sphere
 	static bool sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_sphereB);
 	static bool sphereToPlane(PhysicsObject * a_sphere, PhysicsObject * a_plane);
+	static bool sphereToBox(PhysicsObject * a_sphere, PhysicsObject * a_box);
+	// box
+	static bool boxToSphere(PhysicsObject * a_box, PhysicsObject * a_sphere);
+	static bool boxToPlane(PhysicsObject * a_sphere, PhysicsObject * a_plane);
+	static bool boxToBox(PhysicsObject * a_boxA, PhysicsObject * a_boxB);
 
 	// scene properties
 	PhysicsProperties properties;

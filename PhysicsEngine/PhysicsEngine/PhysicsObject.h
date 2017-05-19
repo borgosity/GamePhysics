@@ -6,7 +6,7 @@ enum ShapeType {
 	PLANE = 0,
 	SPHERE = 1,
 	BOX = 2,
-	SHAPE_COUNT = 2
+	SHAPE_COUNT = 3
 };
 
 class RigidBody;
