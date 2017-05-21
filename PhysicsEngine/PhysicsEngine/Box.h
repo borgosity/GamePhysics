@@ -14,6 +14,8 @@ public:
 
 	float getSize() { return m_size; }
 	glm::vec4 getColour() { return m_colour; }
+	bool testAABB(PhysicsObject * a_object);
+	float distToPointAABB(glm::vec3 a_point);
 private:
 	float m_size;
 	glm::vec4 m_colour;

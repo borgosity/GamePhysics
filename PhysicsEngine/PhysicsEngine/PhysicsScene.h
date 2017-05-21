@@ -43,7 +43,7 @@ public:
 	static bool sphereToBox(PhysicsObject * a_sphere, PhysicsObject * a_box);
 	// box
 	static bool boxToSphere(PhysicsObject * a_box, PhysicsObject * a_sphere);
-	static bool boxToPlane(PhysicsObject * a_sphere, PhysicsObject * a_plane);
+	static bool boxToPlane(PhysicsObject * a_box, PhysicsObject * a_plane);
 	static bool boxToBox(PhysicsObject * a_boxA, PhysicsObject * a_boxB);
 
 	// scene properties

@@ -307,8 +307,14 @@ void PhysicsApp::draw3D()
 	float fovy = glm::pi<float>() * 0.25f;
 	float aspect = getWindowWidth() / (float)getWindowHeight();
 	m_projectionMatrix = glm::perspective(fovy, aspect,	0.1f, 1000.f);
-
-	if (m_demo != DEMO6) {
+	// select a demo to display
+	switch (m_demo)
+	{
+	case DEMO5:
+		break;
+	case DEMO6:
+		break;
+	default:
 		// draw a simple grid with gizmos
 		glm::vec4 white(1.0f);
 		glm::vec4 grey(0.5f, 0.5f, 0.5f, 1.0f);
@@ -322,8 +328,8 @@ void PhysicsApp::draw3D()
 				glm::vec3(-10, 0, -10 + i),
 				i == 10 ? white : grey);
 		}
+		break;
 	}
-
 	// draw gizmos
 	aie::Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 }
@@ -354,8 +360,8 @@ void PhysicsApp::demo1()
 			m_physicsScene->addActor(ball);
 		}
 		if (m_render3D && !m_render2D) {
-				Sphere * ball = new Sphere(glm::vec3(-11.0f, 0.0f, 0.01f), glm::vec3(5.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
-				m_physicsScene->addActor(ball);
+			Sphere * ball = new Sphere(glm::vec3(-11.0f, 0.0f, 0.01f), glm::vec3(5.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
+			m_physicsScene->addActor(ball);
 		}
 		m_physicsScene->setGravity(glm::vec3(0.0f, 0.f, 0.0f));
 		m_renderChosen = true;
@@ -391,6 +397,7 @@ void PhysicsApp::demo3(float a_dt)
 	if (m_render2D && !m_render3D) {
 		if (!m_renderChosen) {
 			m_rocket = new Sphere(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 20.0f, 2.0f, glm::vec4(0, 1, 0, 1), true);
+			m_rocket->rigidbody()->data.isKinematic = true;
 			m_physicsScene->addActor(m_rocket);
 			m_renderChosen = true;
 		}
@@ -404,6 +411,7 @@ void PhysicsApp::demo3(float a_dt)
 				m_rocket->rigidbody()->data.mass -= 0.5f;
 				glm::vec3 postion = m_rocket->getPosition() + glm::vec3(0.0f, -m_rocket->getRadius(), 0.0f);
 				Sphere * gas = new Sphere(glm::vec3(postion.x, postion.y + 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.5f, glm::vec4(0.5, 0.5, 0.5, 1), true);
+				gas->rigidbody()->data.isKinematic = true;
 				m_rocket->rigidbody()->applyForceToActor(gas->rigidbody(), glm::vec3(0.0f, -2.0f, 0.0f));
 				m_physicsScene->addActor(gas);
 			}
@@ -414,6 +422,7 @@ void PhysicsApp::demo3(float a_dt)
 	if (m_render3D && !m_render2D) {
 		if (!m_renderChosen) {
 			m_rocket = new Sphere(glm::vec3(-0.0f, 0.0f, 0.01f), glm::vec3(0.0f, 0.0f, 0.0f), 20.0f, 0.5f, glm::vec4(0, 1, 0, 1));
+			m_rocket->rigidbody()->data.isKinematic = true;
 			m_physicsScene->addActor(m_rocket);
 			m_renderChosen = true;
 			m_burnTime = 0;
@@ -428,6 +437,7 @@ void PhysicsApp::demo3(float a_dt)
 				m_rocket->rigidbody()->data.mass -= 0.5f;
 				glm::vec3 postion = m_rocket->getPosition() + glm::vec3(0.0f, -m_rocket->getRadius(), 0.0f);
 				Sphere * gas = new Sphere(glm::vec3(postion.x, postion.y + 0.5f, postion.z), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.2f, glm::vec4(0.5, 0.5, 0.5, 1));
+				gas->rigidbody()->data.isKinematic = true;
 				m_rocket->rigidbody()->applyForceToActor(gas->rigidbody(), glm::vec3(0.0f, -2.0f, 0.0f));
 				m_physicsScene->addActor(gas);
 			}
@@ -525,14 +535,16 @@ void PhysicsApp::demo5(float a_dt)
 	if (m_render2D && !m_render3D) {
 		if (!m_renderChosen) {
 			// world objects
+			// sphere to sphere
 			m_sphereA = new Sphere(glm::vec3(20.0f, 50.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0, 0, 1), true);
 			m_sphereB = new Sphere(glm::vec3(20.0f, 20.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
-			
-			m_boxA = new Box(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
+			// box to box
+			m_boxA = new Box(glm::vec3(-7.0f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
 			m_boxB = new Box(glm::vec3(0.0f, 20.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
+			// box to sphere
+			m_boxC = new Box(glm::vec3(-15.0f, 55.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
+			m_sphereC = new Sphere(glm::vec3(-21.0f, 40.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
 
-			m_boxC = new Box(glm::vec3(-20.0f, 55.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
-			m_sphereC = new Sphere(glm::vec3(-20.0f, 40.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
 			m_planeA = new Plane(glm::vec3(0.25f, -1.0f, 0.0f), 50.0f, true);
 			m_planeB = new Plane(glm::vec3(-0.05f, -1.0f, 0.0f), 50.0f, true);
 
@@ -557,10 +569,10 @@ void PhysicsApp::demo5(float a_dt)
 		if (!m_renderChosen) {
 			// world objects
 			// box to box
-			m_boxA = new Box(glm::vec3(0.0f, 10.0f, -3.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 0.2f, 1, 1));
+			m_boxA = new Box(glm::vec3(-0.7f, 10.0f, -3.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 0.2f, 1, 1));
 			m_boxB = new Box(glm::vec3(0.0f, 5.0f, -3.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0.2f, 0, 1));
 			// box to sphere
-			m_boxC = new Box(glm::vec3(1.0f, 15.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0.2f, 1));
+			m_boxC = new Box(glm::vec3(2.25f, 15.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0.2f, 1));
 			m_sphereA = new Sphere(glm::vec3(1.0f, 12.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
 			// sphere to sphere
 			m_sphereB = new Sphere(glm::vec3(-5.0f, 5.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
@@ -599,7 +611,7 @@ void PhysicsApp::demo6(float a_dt)
 			m_sphereB->rigidbody()->data.isKinematic = true;
 			m_sphereB->rigidbody()->data.onGround = true;
 			// box to box
-			m_boxA = new Box(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
+			m_boxA = new Box(glm::vec3(2.5f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
 			m_boxA->rigidbody()->data.isKinematic = true;
 			m_boxB = new Box(glm::vec3(0.0f, 2.5f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
 			m_boxB->rigidbody()->data.isKinematic = true;

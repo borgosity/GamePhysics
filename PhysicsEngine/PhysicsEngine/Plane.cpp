@@ -47,12 +47,12 @@ void Plane::makeGizmo()
 	if (m_2D) {
 		float lineLength = m_distanceToOrigin;
 		glm::vec2 centerPoint(m_normal.x, m_normal.y);
-		glm::vec2 parallel(m_normal.y, -m_normal.x);
+		glm::vec2 parallel(m_normal.y - 0.01f, -m_normal.x);
 		// set colour
 		glm::vec4 colour(0.0f, 0.5f, 1.0f, 1.0f);
 		// define start and end point
-		glm::vec2 start = centerPoint + (parallel * 100.0f);
-		glm::vec2 end = centerPoint - (parallel * 100.0f);
+		glm::vec2 start = centerPoint + (parallel * 100.0f) + 1.0f;
+		glm::vec2 end = centerPoint - (parallel * 100.0f) + 1.0f;
 		// add line
 		aie::Gizmos::add2DLine(start, end, colour);
 	}
@@ -60,8 +60,8 @@ void Plane::makeGizmo()
 		float lineLength = m_distanceToOrigin;
 		glm::vec3 centerPoint(m_normal);
 		glm::vec3 parallel(m_normal.y, -m_normal.x, m_normal.z);
-		glm::vec3 start = /*centerPoint*/ + (parallel * lineLength);
-		glm::vec3 end = /*centerPoint*/ - (parallel * lineLength);
+		glm::vec3 start = (parallel * lineLength) -0.1f;
+		glm::vec3 end = -(parallel * lineLength) -0.1f;
 		// draw a simple grid with gizmos
 		glm::vec4 blue(0.0f, 0.5f, 1.0f, 1.0f);
 		glm::vec4 lightBlue(0.0f, 0.75f, 1.0f, 1.0f);

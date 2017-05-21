@@ -65,7 +65,7 @@ void RigidBody::applyForceToActor(RigidBody * a_pActor2, glm::vec3 a_force)
 	if (!a_pActor2->data.onGround) {
 		a_pActor2->applyForce(a_force);
 	}
-	if (data.onGround) {
+	if (!data.onGround) {
 		applyForce(-a_force);
 	}
 }
