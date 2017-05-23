@@ -49,6 +49,13 @@ private:
 	PhysicsScene * m_physicsScene = nullptr;
 	PhysicsObject * m_poNumberOne = nullptr;
 
+	// mouse input
+	glm::ivec2 m_firstClick;
+	glm::ivec2 m_mouseScreenPos;
+	glm::vec2 m_mouseWorldPos;
+
+	bool m_mouseClicked;
+
 	// rendering
 	bool m_renderChosen;
 	bool m_render2D;
@@ -58,6 +65,7 @@ private:
 	aie::Font		* m_font;
 	glm::mat4	m_viewMatrix;
 	glm::vec3	m_cameraView;
+	float		m_2dView;
 	glm::mat4	m_projectionMatrix;
 
 	// demos
@@ -95,5 +103,8 @@ private:
 	// -- demo 6 --
 	// collision response
 	void demo6(float a_dt);
+	// -- demo 7 --
+	// drag
+	void demo7(float a_dt);
 };
 

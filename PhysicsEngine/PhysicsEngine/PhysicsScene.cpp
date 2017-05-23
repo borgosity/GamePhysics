@@ -73,6 +73,57 @@ void PhysicsScene::clearScene()
 	m_actors.clear();
 }
 
+void PhysicsScene::update(float a_dt)
+{
+	// update physics at fixed time step
+	static float timer = 0;
+	timer += a_dt;
+	if (timer >= m_timeStep) {
+		timer -= m_timeStep;
+		// update all
+		for (auto actor : m_actors) {
+			if (actor != nullptr) {
+				actor->fixedUpdate( properties.gravity ? m_gravity : glm::vec3(0.0f), a_dt);
+			}
+		}
+		// if apply for was selected
+		if (m_applyForce) {
+			// find actors
+			if (m_pActorA == nullptr || m_pActorB == nullptr) {
+				int count = 0;
+				for (auto actor : m_actors) {
+					if (count == m_iActorA) {
+						m_pActorA = actor;
+					}
+					if (count == m_iActorB) {
+						m_pActorB = actor;
+					}
+					// increment count
+					count++;
+				}
+			}
+			// add force
+			m_pActorA->rigidbody()->applyForceToActor(m_pActorB->rigidbody(),glm::vec3(1.0f, 0.0f, 0.0f));
+		}
+		else {
+			// set actors back to nullptr
+			m_pActorA = nullptr; 
+			m_pActorB = nullptr;
+		}
+		// check for collisions
+		if (properties.collisions) {
+			checkCollisions();
+		}
+	}
+}
+
+void PhysicsScene::updateGizmos()
+{
+	for (auto actor : m_actors) {
+		actor->makeGizmo();
+	}
+}
+
 void PhysicsScene::checkCollisions()
 {
 	int actorCount = numberOfActors();
@@ -95,7 +146,9 @@ void PhysicsScene::checkCollisions()
 		}
 	}
 }
-
+/*********************************************************************************************************
+* Plane to Object collsions
+**********************************************************************************************************/
 bool PhysicsScene::planeToPlane(PhysicsObject * a_planeA, PhysicsObject * a_planeB)
 {
 	Plane * planeA = (Plane*)a_planeA;
@@ -120,7 +173,9 @@ bool PhysicsScene::planeToBox(PhysicsObject * a_plane, PhysicsObject * a_box)
 {
 	return boxToPlane(a_box, a_plane);;
 }
-
+/*********************************************************************************************************
+* Sphere to Object collsions
+**********************************************************************************************************/
 bool PhysicsScene::sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_sphereB)
 {
 	Sphere * sphereA = (Sphere*)a_sphereA;
@@ -147,8 +202,11 @@ bool PhysicsScene::sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_s
 					glm::vec3 relativeVelocity = sphereA->getVelocity() - sphereB->getVelocity();
 					glm::vec3 collisionVector = collisionNormal * (glm::dot(relativeVelocity, collisionNormal));
 					glm::vec3 forceVector = collisionVector * 1.0f / (1.0f / sphereA->rigidbody()->data.mass + 1.0f / sphereB->rigidbody()->data.mass);
+					// combine elasticity
+					float combinedElasticity = (sphereA->rigidbody()->data.elasticity +
+												sphereB->rigidbody()->data.elasticity / 2.0f);
 					// use Newton's third law to apply collision forces to colliding bodies 
-					sphereA->rigidbody()->applyForceToActor(sphereB->rigidbody(), forceVector * 2.0f);
+					sphereA->rigidbody()->applyForceToActor(sphereB->rigidbody(), forceVector + (forceVector*combinedElasticity));
 					// move out spheres out of collision 
 					glm::vec3 separationVector = collisionNormal * distance * 0.5f;
 					sphereA->setPosition(sphereA->getPosition() - separationVector);
@@ -210,9 +268,12 @@ bool PhysicsScene::sphereToPlane(PhysicsObject * a_sphere, PhysicsObject * a_pla
 			if (kinematic) {
 				// calculate force vector
 				glm::vec3 forceVector = -1 * sphere->rigidbody()->data.mass * planeNorm * (glm::dot(planeNorm, sphere->getVelocity()));
+				// combine elasticity
+				float combinedElasticity = (sphere->rigidbody()->data.elasticity +
+											plane->getElasticity() / 2.0f);
 				// only bounce if not resting on the ground
 				if (!sphere->rigidbody()->data.onGround) {
-					sphere->rigidbody()->applyForce(2.0f * forceVector);
+					sphere->rigidbody()->applyForce(forceVector + (forceVector*combinedElasticity));
 					// move out of collision
 					glm::vec3 separationVector = planeNorm * collision * 0.5f;
 					sphere->setPosition(sphere->getPosition() - separationVector);
@@ -233,7 +294,9 @@ bool PhysicsScene::sphereToBox(PhysicsObject * a_sphere, PhysicsObject * a_box)
 {
 	return boxToSphere(a_box, a_sphere);
 }
-
+/*********************************************************************************************************
+* Box to Object collsions
+**********************************************************************************************************/
 bool PhysicsScene::boxToSphere(PhysicsObject * a_box, PhysicsObject * a_sphere)
 {
 	Box * box = (Box*)a_box;
@@ -259,8 +322,11 @@ bool PhysicsScene::boxToSphere(PhysicsObject * a_box, PhysicsObject * a_sphere)
 					glm::vec3 relativeVelocity = box->getVelocity() - sphere->getVelocity();
 					glm::vec3 collisionVector = collisionNormal * (glm::dot(relativeVelocity, collisionNormal));
 					glm::vec3 forceVector = collisionVector * 1.0f / (1.0f / box->rigidbody()->data.mass + 1.0f / sphere->rigidbody()->data.mass);
+					// combine elasticity
+					float combinedElasticity = (box->rigidbody()->data.elasticity +
+												sphere->rigidbody()->data.elasticity / 2.0f);
 					// use Newton's third law to apply collision forces to colliding bodies 
-					box->rigidbody()->applyForceToActor(sphere->rigidbody(), forceVector * 2.0f);
+					box->rigidbody()->applyForceToActor(sphere->rigidbody(), forceVector + (forceVector*combinedElasticity));
 					// move out boxs out of collision 
 					glm::vec3 separationVector = collisionNormal * overlap * 0.5f;
 					box->setPosition(box->getPosition() - separationVector);
@@ -327,9 +393,12 @@ bool PhysicsScene::boxToPlane(PhysicsObject * a_box, PhysicsObject * a_plane)
 			if (kinematic) {
 				// calculate force vector
 				glm::vec3 forceVector = -1 * box->rigidbody()->data.mass * planeNormal * (glm::dot(planeNormal, box->getVelocity()));
+				// combine elasticity
+				float combinedElasticity = (box->rigidbody()->data.elasticity +
+											plane->getElasticity() / 2.0f);
 				// only bounce if not resting on the ground
 				if (!box->rigidbody()->data.onGround) {
-					box->rigidbody()->applyForce(2.0f * forceVector);
+					box->rigidbody()->applyForce(forceVector + (forceVector*combinedElasticity));
 					// move out of collision
 					glm::vec3 separationVector = planeNormal * collision * 0.5f;
 					box->setPosition(box->getPosition() - separationVector);
@@ -372,8 +441,11 @@ bool PhysicsScene::boxToBox(PhysicsObject * a_boxA, PhysicsObject * a_boxB)
 					glm::vec3 relativeVelocity = boxA->getVelocity() - boxB->getVelocity();
 					glm::vec3 collisionVector = collisionNormal * (glm::dot(relativeVelocity, collisionNormal));
 					glm::vec3 forceVector = collisionVector * 1.0f / (1.0f / boxA->rigidbody()->data.mass + 1.0f / boxB->rigidbody()->data.mass);
+					// combine elasticity
+					float combinedElasticity = (boxA->rigidbody()->data.elasticity +
+												boxB->rigidbody()->data.elasticity / 2.0f);
 					// use Newton's third law to apply collision forces to colliding bodies 
-					boxA->rigidbody()->applyForceToActor(boxB->rigidbody(), forceVector * 2.0f);
+					boxA->rigidbody()->applyForceToActor(boxB->rigidbody(), forceVector + (forceVector*combinedElasticity));
 					// move out boxs out of collision 
 					glm::vec3 separationVector = collisionNormal * overlap * 0.5f;
 					boxA->setPosition(boxA->getPosition() - separationVector);
@@ -410,56 +482,6 @@ bool PhysicsScene::boxToBox(PhysicsObject * a_boxA, PhysicsObject * a_boxB)
 	return false;
 }
 
-void PhysicsScene::update(float a_dt)
-{
-	// update physics at fixed time step
-	static float timer = 0;
-	timer += a_dt;
-	if (timer >= m_timeStep) {
-		timer -= m_timeStep;
-		// update all
-		for (auto actor : m_actors) {
-			if (actor != nullptr) {
-				actor->fixedUpdate( properties.gravity ? m_gravity : glm::vec3(0.0f), a_dt);
-			}
-		}
-		// if apply for was selected
-		if (m_applyForce) {
-			// find actors
-			if (m_pActorA == nullptr || m_pActorB == nullptr) {
-				int count = 0;
-				for (auto actor : m_actors) {
-					if (count == m_iActorA) {
-						m_pActorA = actor;
-					}
-					if (count == m_iActorB) {
-						m_pActorB = actor;
-					}
-					// increment count
-					count++;
-				}
-			}
-			// add force
-			m_pActorA->rigidbody()->applyForceToActor(m_pActorB->rigidbody(),glm::vec3(1.0f, 0.0f, 0.0f));
-		}
-		else {
-			// set actors back to nullptr
-			m_pActorA = nullptr; 
-			m_pActorB = nullptr;
-		}
-		// check for collisions
-		if (properties.collisions) {
-			checkCollisions();
-		}
-	}
-}
-
-void PhysicsScene::updateGizmos()
-{
-	for (auto actor : m_actors) {
-		actor->makeGizmo();
-	}
-}
 
 void PhysicsScene::debugScene()
 {

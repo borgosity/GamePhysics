@@ -14,6 +14,7 @@ Plane::Plane()
 	m_distanceToOrigin = 50.0f;
 	m_position = m_normal;
 	m_2D = false;
+	m_elasticity = 0.7f;
 }
 
 Plane::Plane(glm::vec3 normal, float distance, bool twoD)
@@ -22,6 +23,7 @@ Plane::Plane(glm::vec3 normal, float distance, bool twoD)
 	m_normal = normal;
 	m_distanceToOrigin = distance;
 	m_2D = twoD;
+	m_elasticity = 0.7f;
 }
 
 

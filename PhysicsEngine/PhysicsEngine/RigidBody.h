@@ -3,6 +3,7 @@
 
 struct RigidBodyData {
 	glm::vec3 velocity;
+	glm::vec3 angularVelocity;
 	glm::vec3 startVelocity;
 	glm::vec3 position;
 	glm::vec3 startPosition;
@@ -10,11 +11,11 @@ struct RigidBodyData {
 	float mass;
 	bool onGround = false;
 	bool isKinematic = false;
+	bool rotationLock = true;
 	// friction
-	float angularVelocity = 0.0f;
-	float linearDrag = 0.5f;
-	float angularDrag = 0.5f;
-	float elasticity = 0.0f;  // lower numbers are force absorbant
+	float linearDrag = 1.0f;	// 1.0f equals no drag
+	float angularDrag = 1.0f;	// 1.0f equals no drag
+	float elasticity = 1.0f;	// lower numbers are force absorbant
 };
 
 

@@ -20,11 +20,15 @@ public:
 	//virtual  void setPosition(glm::vec3 a_position) override;
 	glm::vec3 getNormal() { return m_normal; }
 	float getDistance() { return m_distanceToOrigin; }
+	float getElasticity() { return m_elasticity; }
+	void setElasticity(float a_elasticity) { m_elasticity = a_elasticity; }
+
 
 private:
 	bool m_2D;
 	glm::vec3 m_position;
 	glm::vec3 m_normal;
 	float m_distanceToOrigin;
+	float m_elasticity;
 };
 

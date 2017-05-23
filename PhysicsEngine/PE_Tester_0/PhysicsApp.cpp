@@ -36,6 +36,7 @@ bool PhysicsApp::startup()
 	// initialise gizmo primitive counts
 	aie::Gizmos::create(10000, 10000, 10000, 10000);
 	// create simple camera transforms
+	m_2dView = 100.f;
 	m_cameraView = glm::vec3(0.0f, 10.0f, 20.0f);
 	m_viewMatrix = glm::lookAt(m_cameraView, glm::vec3(0), glm::vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f,
@@ -125,9 +126,29 @@ void PhysicsApp::update(float a_dt)
 	case DEMO6:
 		demo6(a_dt);
 		break;
+	case DEMO7:
+		demo7(a_dt);
+		break;
 	default:
 		std::cout << "Demo not yet defined" << std::endl;
 		break;
+	}
+	// detect mouse clicks
+	if (input->isMouseButtonDown(0)) {
+		if (!m_mouseClicked) {
+			// save initial click position
+			input->getMouseXY(&m_firstClick.x, &m_firstClick.y);
+			m_mouseClicked = true;
+		}
+		else {
+			// save mouse current screeen position
+			input->getMouseXY(&m_mouseScreenPos.x, &m_mouseScreenPos.y);
+		}
+		std::cout << "mouse clicked" << std::endl;
+	}
+	if (input->isMouseButtonUp(0) && m_mouseClicked) {
+		m_mouseClicked = false;
+		std::cout << "mouse released" << std::endl;
 	}
 
 	// exit the application
@@ -276,27 +297,36 @@ void PhysicsApp::drawGUI()
 		ImGui::DragFloat("Up/Down", &m_cameraView.y, 0.01f, 100.0f, 1.0f);
 		ImGui::DragFloat("In/Out", &m_cameraView.z, 0.01f, 100.0f, 1.0f);
 	}
+	if (m_render2D) {
+		ImGui::Text("Adjust Camera");
+		ImGui::DragFloat("Zoom", &m_2dView, 0.01f, 100.0f, 1.0f);
+	}
 	ImGui::End();
 }
 
 void PhysicsApp::draw2D()
 {
+	// camera view
 	static float aspectRatio = 16 / 9.0f;
+	float size = m_2dView;
+	
+	// line colour
 	glm::vec4 grey(0.5f, 0.5f, 0.5f, 1.0f);
-	glm::vec2 startX(-100.0f, 0.0f );
-	glm::vec2 endX(100.0f, 0.0f);
+	// line horizontal
+	glm::vec2 startX(-size, 0.0f );
+	glm::vec2 endX(size, 0.0f);
 	aie::Gizmos::add2DLine(startX, endX, grey);
-	glm::vec2 startY(0.0f, 100 / aspectRatio);
-	glm::vec2 endY(0.0f, -100 / aspectRatio);
+	// line vertical
+	glm::vec2 startY(0.0f, size / aspectRatio);
+	glm::vec2 endY(0.0f, -size / aspectRatio);
 	aie::Gizmos::add2DLine(startY, endY, grey);
+	
 	// draw gizmos
 	aie::Gizmos::draw2D(glm::ortho<float>(
-		-100, 100,
-		-100 / aspectRatio, 100 / aspectRatio, -1.0f, 1.0f
+		-size, size,
+		-size / aspectRatio, size / aspectRatio, -1.0f, 1.0f
 		)
 	);
-	//m_renderer->drawLine(HALF_SW, 0.0f, HALF_SW, SCREEN_H, 1.0f);
-	//m_renderer->drawLine(0.0f, HALF_SH, SCREEN_W, HALF_SH, 1.0f);
 }
 
 void PhysicsApp::draw3D()
@@ -313,6 +343,8 @@ void PhysicsApp::draw3D()
 	case DEMO5:
 		break;
 	case DEMO6:
+		break;
+	case DEMO7:
 		break;
 	default:
 		// draw a simple grid with gizmos
@@ -679,3 +711,99 @@ void PhysicsApp::demo6(float a_dt)
 		}
 	}
 }
+/*****************************************************************************************
+*  Demo 7 Drag
+*****************************************************************************************/
+void PhysicsApp::demo7(float a_dt)
+{
+	// 2D simulation
+	if (m_render2D && !m_render3D) {
+		if (!m_renderChosen) {
+			// world objects
+			// sphere to sphere
+			//m_sphereA = new Sphere(glm::vec3(20.0f, 50.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0, 0, 1), true);
+			//m_sphereA->rigidbody()->data.isKinematic = true;
+
+			
+			m_sphereB = new Sphere(glm::vec3(20.0f, 10.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
+			m_sphereB->rigidbody()->data.isKinematic = true;
+			m_sphereB->rigidbody()->data.linearDrag = 0.85f;
+			m_sphereB->rigidbody()->data.elasticity = 0.8f;
+			m_sphereB->rigidbody()->data.rotation = glm::vec3(0.01f, 0.0f, 0.0f);
+			m_sphereB->rigidbody()->data.onGround = true;
+
+			// box to box
+			//m_boxA = new Box(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
+			//m_boxA->rigidbody()->data.isKinematic = true;
+			
+			m_boxB = new Box(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
+			m_boxB->rigidbody()->data.isKinematic = true;
+			m_boxB->rigidbody()->data.linearDrag = 0.95f;
+			m_boxB->rigidbody()->data.elasticity = 0.5f;
+			m_boxB->rigidbody()->data.rotation = glm::vec3(0.01f, 0.0f, 0.0f);
+			m_boxB->rigidbody()->data.onGround = true;
+
+			// box to sphere
+			//m_boxC = new Box(glm::vec3(-20.0f, 55.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
+			//m_boxC->rigidbody()->data.isKinematic = true;
+			//m_sphereC = new Sphere(glm::vec3(-20.0f, 40.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
+			//m_sphereC->rigidbody()->data.isKinematic = true;
+			// planes
+			m_planeA = new Plane(glm::vec3(0.05f, -1.0f, 0.0f), 50.0f, true);
+			//m_planeB = new Plane(glm::vec3(-0.05f, -1.0f, 0.0f), 50.0f, true);
+
+			//m_physicsScene->addActor(m_sphereA);
+			m_physicsScene->addActor(m_sphereB);
+			//m_physicsScene->addActor(m_boxA);
+			m_physicsScene->addActor(m_boxB);
+			//m_physicsScene->addActor(m_boxC);
+			//m_physicsScene->addActor(m_sphereC);
+			m_physicsScene->addActor(m_planeA);
+
+			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
+			m_physicsScene->properties.gravity = true;
+			m_physicsScene->properties.collisions = true;
+			m_renderChosen = true;
+		}
+
+	}
+	// 3D simulation
+	if (m_render3D && !m_render2D) {
+		if (!m_renderChosen) {
+			// world objects
+			// box to box
+			m_boxA = new Box(glm::vec3(1.0f, 1.50f, -3.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 0.2f, 1, 1));
+			m_boxA->rigidbody()->data.isKinematic = true;
+			m_boxA->rigidbody()->data.onGround = true;
+			m_boxB = new Box(glm::vec3(1.0f, 10.0f, -3.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0.2f, 0, 1));
+			m_boxB->rigidbody()->data.isKinematic = true;
+			// box to sphere
+			m_boxC = new Box(glm::vec3(1.0f, 10.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0.2f, 1));
+			m_boxC->rigidbody()->data.isKinematic = true;
+			m_sphereA = new Sphere(glm::vec3(1.0f, 1.25f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
+			m_sphereA->rigidbody()->data.isKinematic = true;
+			m_sphereA->rigidbody()->data.onGround = true;
+			// sphere to sphere
+			m_sphereB = new Sphere(glm::vec3(-5.0f, 10.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
+			m_sphereB->rigidbody()->data.isKinematic = true;
+			m_sphereC = new Sphere(glm::vec3(-5.0f, 5.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0, 1));
+			m_sphereC->rigidbody()->data.isKinematic = true;
+
+			m_planeA = new Plane(glm::vec3(-0.25f, 1.0f, 0.0f), 20.0f);
+			//m_planeB = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 10.0f);
+			m_physicsScene->addActor(m_sphereA);
+			m_physicsScene->addActor(m_boxC);
+			m_physicsScene->addActor(m_boxA);
+			m_physicsScene->addActor(m_boxB);
+			m_physicsScene->addActor(m_sphereB);
+			m_physicsScene->addActor(m_sphereC);
+			m_physicsScene->addActor(m_planeA);
+
+			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
+			m_physicsScene->properties.gravity = true;
+			m_physicsScene->properties.collisions = true;
+			m_renderChosen = true;
+		}
+	}
+}
+
