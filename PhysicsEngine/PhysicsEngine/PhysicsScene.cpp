@@ -8,6 +8,7 @@
 #include <string>
 #include <iostream>
 #include <stdlib.h>
+#include <math.h>
 
 #include "imgui_glfw3.h"
 #include <glm\gtx\range.hpp>
@@ -191,33 +192,29 @@ bool PhysicsScene::sphereToPlane(PhysicsObject * a_sphere, PhysicsObject * a_pla
 	// check if objects aren't null before testing
 	if (sphere != nullptr && plane != nullptr) {
 		bool kinematic = sphere->rigidbody()->data.isKinematic;
-		glm::vec3 collisionNorm = plane->getNormal();
+		glm::vec3 planeNorm = plane->getNormal();
 		float planeDO = plane->getDistance();
+		// magnitude of sphere vector, plane normal
+		float mag = (dot(sphere->getPosition(), planeNorm));
 
-		float gap = (dot(sphere->getPosition(), collisionNorm));
-
-		// if planeNorm is below 0 gap will be negative
-		if (gap < 0)
+		// if planeNorm is below 0 magnitude will be negative
+		if (mag < 0)
 		{
-			collisionNorm *= -1;
-			gap *= -1;
+			planeNorm *= -1;
+			mag *= -1;
 		}
 
-		float collision = gap - sphere->getRadius();
-
+		float collision = mag - sphere->getRadius();
+		// collision check
 		if (collision < 0.0f) {
 			if (kinematic) {
-				glm::vec3 planeNorm = plane->getNormal();
-				if (gap < 0)
-				{
-					planeNorm *= -1;
-				}
+				// calculate force vector
 				glm::vec3 forceVector = -1 * sphere->rigidbody()->data.mass * planeNorm * (glm::dot(planeNorm, sphere->getVelocity()));
 				// only bounce if not resting on the ground
 				if (!sphere->rigidbody()->data.onGround) {
 					sphere->rigidbody()->applyForce(2.0f * forceVector);
 					// move out of collision
-					glm::vec3 separationVector = collisionNorm * collision * 0.5f;
+					glm::vec3 separationVector = planeNorm * collision * 0.5f;
 					sphere->setPosition(sphere->getPosition() - separationVector);
 				}
 			}
@@ -306,22 +303,35 @@ bool PhysicsScene::boxToPlane(PhysicsObject * a_box, PhysicsObject * a_plane)
 	Plane * plane = (Plane*)a_plane;
 	// check if objects aren't null before testing
 	if (box != nullptr && plane != nullptr) {
-		glm::vec3 collisionNorm = plane->getNormal();
+		glm::vec3 planeNormal = plane->getNormal();
+		glm::vec3 center = box->getPosition();
+		glm::vec3 extents(box->getSize());
+		// magnitude of box center and plane vectors
+		float mag = dot(planeNormal, center);
+		// projection interval radius of box onto the plane
+		float radius = extents.x * abs(planeNormal.x) + extents.y * abs(planeNormal.y) + extents.z * abs(planeNormal.z);
+
+		// if planeNorm is below 0 magnitude will be negative
+		if (mag < 0)
+		{
+			planeNormal *= -1;
+			mag *= -1;
+		}
+
+		float collision = mag - radius;
 
 		// collision check
-		if (box->testAABB(plane)) {
+		if (collision <= 0.0f) {
 			// cache some data
 			bool kinematic = box->rigidbody()->data.isKinematic;
 			if (kinematic) {
-				glm::vec3 planeNorm = plane->getNormal();
-
-				glm::vec3 forceVector = -1 * box->rigidbody()->data.mass * planeNorm * (glm::dot(planeNorm, box->getVelocity()));
+				// calculate force vector
+				glm::vec3 forceVector = -1 * box->rigidbody()->data.mass * planeNormal * (glm::dot(planeNormal, box->getVelocity()));
 				// only bounce if not resting on the ground
 				if (!box->rigidbody()->data.onGround) {
 					box->rigidbody()->applyForce(2.0f * forceVector);
 					// move out of collision
-					float collision = box->distToPointAABB(planeNorm);
-					glm::vec3 separationVector = collisionNorm * collision * 0.5f;
+					glm::vec3 separationVector = planeNormal * collision * 0.5f;
 					box->setPosition(box->getPosition() - separationVector);
 				}
 			}
@@ -379,8 +389,8 @@ bool PhysicsScene::boxToBox(PhysicsObject * a_boxA, PhysicsObject * a_boxB)
 					// apply force
 					box->rigidbody()->applyForce(forceVector * 2.0f);
 					// move out of collision
-					//glm::vec3 separationVector = collisionNormal * distance * 0.5f;
-					//box->setPosition(box->getPosition() - separationVector);
+					glm::vec3 separationVector = collisionNormal * overlap * 0.5f;
+					box->setPosition(box->getPosition() - separationVector);
 					// stop other box from being on ground
 					boxGround->rigidbody()->data.onGround = false;
 				}

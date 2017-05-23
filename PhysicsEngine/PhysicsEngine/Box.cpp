@@ -5,6 +5,7 @@
 #include "Plane.h"
 
 #include <stdlib.h>
+#include <iostream>
 #include "glm\glm.hpp"
 #include <glm/gtc/type_ptr.hpp>
 
@@ -77,36 +78,31 @@ bool Box::testAABB(PhysicsObject * a_object)
 		// return true is all checks pass
 		return true;
 	}
-	if (a_object->getShapeID() == PLANE) {
-		Plane * plane = (Plane *)a_object;
-		// cache some values
-		glm::vec3 planeNormal = plane->getNormal();
-		glm::vec3 center = getPosition();
-		glm::vec3 extents(getSize());
-		// Compute the projection interval radius of box onto the plane
-		float radius = extents.x * abs(planeNormal.x) + extents.y * abs(planeNormal.y) + extents.z * abs(planeNormal.z);
-		// Compute distance of box center from plane
-		float distance = dot(planeNormal, center);
-		// Intersection occurs when distance s falls within [-r,+r] interval
-		if (abs(distance) > radius) return false;
-		// return true is all checks pass
-		return true;
-	}
+
 	return false;
 }
-
+/// Returns the distance between AABB and a given point/vector
+/// - distance is returned as a squred value, square root required for true distance
 float Box::distToPointAABB(glm::vec3 a_point)
 {
 	glm::vec3 center = getPosition();
 	float distance = 0.0f;
+	// setup min max values as we use radius system for AABB
 	glm::vec3 min(center.x - m_size, center.y - m_size, center.z - m_size);
 	glm::vec3 max(center.x + m_size, center.y + m_size, center.z + m_size);
-	
+	// iterate through the point vector and compare it to min/max values
+	// - accumulate squared distance as we go
 	for (int i = 0; i < 3; i++)
 	{
-		float v = a_point[i];
-		if (v < min[i]) distance += (min[i] - v) * (min[i] - v);
-		if (v > max[i]) distance += (v - max[i]) * (v - max[i]);
+		float p = a_point[i];
+		if (p < min[i]) {
+			distance += (min[i] - p) * (min[i] - p);
+		}
+		if (p > max[i]) {
+			distance += (p - max[i]) * (p - max[i]);
+		}
 	}
+	// return distance
 	return distance;
 }
+

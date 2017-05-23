@@ -611,9 +611,9 @@ void PhysicsApp::demo6(float a_dt)
 			m_sphereB->rigidbody()->data.isKinematic = true;
 			m_sphereB->rigidbody()->data.onGround = true;
 			// box to box
-			m_boxA = new Box(glm::vec3(2.5f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
+			m_boxA = new Box(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
 			m_boxA->rigidbody()->data.isKinematic = true;
-			m_boxB = new Box(glm::vec3(0.0f, 2.5f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
+			m_boxB = new Box(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
 			m_boxB->rigidbody()->data.isKinematic = true;
 			m_boxB->rigidbody()->data.onGround = true;
 			// box to sphere
@@ -645,7 +645,7 @@ void PhysicsApp::demo6(float a_dt)
 		if (!m_renderChosen) {
 			// world objects
 			// box to box
-			m_boxA = new Box(glm::vec3(1.0f, 1.25f, -3.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 0.2f, 1, 1));
+			m_boxA = new Box(glm::vec3(1.0f, 1.50f, -3.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 0.2f, 1, 1));
 			m_boxA->rigidbody()->data.isKinematic = true;
 			m_boxA->rigidbody()->data.onGround = true;
 			m_boxB = new Box(glm::vec3(1.0f, 10.0f, -3.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0.2f, 0, 1));
