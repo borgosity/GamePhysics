@@ -4,8 +4,8 @@
 #include "imgui_glfw3.h"
 #include <glm/gtc/type_ptr.hpp>
 
-#define MIN_LINEAR_THRESHOLD 0.01f
-#define MIN_ROTATION_THRESHOLD 0.01f
+#define MIN_LINEAR_THRESHOLD 0.05f
+#define MIN_ROTATION_THRESHOLD 0.05f
 
 RigidBody::RigidBody()
 {
@@ -43,11 +43,18 @@ void RigidBody::fixedUpdate(glm::vec3 gravity, float timeStep)
 	// apply drag
 	if (data.isKinematic) {
 		data.velocity *= data.linearDrag;
+		data.angularVelocity *= data.angularDrag;
 	}
 	// update position
 	data.position += data.velocity * timeStep;
-	// update angular velocity
-	data.angularVelocity -= data.angularVelocity * data.angularDrag * timeStep;
+	// update rotation
+	if (data.rotation.z > 360.0f || data.rotation.z < -360.0f)
+	{
+		data.rotation.z = 0.0f;
+	}
+	else {
+		data.rotation += data.angularVelocity * timeStep;
+	}
 	// adjust velocity's to keep them in check
 	if (length(data.velocity) < MIN_LINEAR_THRESHOLD) { 
 		data.velocity = glm::vec3(0.0f);
@@ -63,12 +70,13 @@ void RigidBody::debug()
 	ImGui::Text(windowName.c_str());
 	ImGui::DragFloat3("position", glm::value_ptr(data.position), 0.05f, -100.0f, 100.0f, "%.2f");
 	ImGui::DragFloat3("velocity", glm::value_ptr(data.velocity), 0.05f, -100.0f, 100.0f, "%.2f");
+	ImGui::DragFloat3("angularVelocity", glm::value_ptr(data.angularVelocity), 0.05f, -100.0f, 100.0f, "%.2f");
 	ImGui::DragFloat3("rotation", glm::value_ptr(data.rotation), 0.05f, -100.0f, 100.0f, "%.2f");
 	ImGui::DragFloat3("angularVel", glm::value_ptr(data.angularVelocity), 0.05f, -100.0f, 100.0f, "%.2f");
 	ImGui::DragFloat("mass", &data.mass, 0.05f, 0.01f, 100.0f, "%.2f");
-	ImGui::DragFloat("linearDrag", &data.linearDrag, 0.05f, 0.01f, 100.0f, "%.2f");
-	ImGui::DragFloat("angularDrag", &data.angularDrag, 0.05f, 0.01f, 100.0f, "%.2f");
-	ImGui::DragFloat("elasticity", &data.elasticity, 0.05f, 0.01f, 100.0f, "%.2f");
+	ImGui::DragFloat("linearDrag", &data.linearDrag, 0.01f, 0.01f, 1.0f, "%.2f");
+	ImGui::DragFloat("angularDrag", &data.angularDrag, 0.01f, 0.01f, 1.0f, "%.2f");
+	ImGui::DragFloat("elasticity", &data.elasticity, 0.01f, 0.01f, 1.0f, "%.2f");
 	ImGui::Checkbox("isKinematic", &data.isKinematic);
 	ImGui::Checkbox("onGround", &data.onGround);
 	ImGui::Checkbox("rotationLock", &data.rotationLock);
@@ -89,12 +97,27 @@ void RigidBody::applyForceToActor(RigidBody * a_pActor2, glm::vec3 a_force)
 	}
 }
 
+void RigidBody::applyTorque(glm::vec3 a_force)
+{
+	data.angularVelocity += a_force / data.mass;
+}
+
+void RigidBody::applyTorqueToActor(RigidBody * a_pActor2, glm::vec3 a_force)
+{
+	if (!a_pActor2->data.onGround) {
+		a_pActor2->applyTorque(a_force);
+	}
+	if (!data.onGround) {
+		applyTorque(-a_force);
+	}
+}
+
 glm::vec3 RigidBody::predictPosition(float a_time, float a_angle, float a_speed, glm::vec3 a_gravity)
 {
 	glm::vec3 result(0.0f);
 	// calculate velocity
 	glm::vec3 velocity(a_speed * cos(a_angle), a_speed * sin(a_angle), 0.0f);
-	//
+	// get result
 	result = predictPosition(a_time, velocity, a_gravity);
 
 	return result;

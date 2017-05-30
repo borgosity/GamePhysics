@@ -30,6 +30,7 @@ public:
 	glm::vec3 setGravity() const { return m_gravity; }
 	void setTimeStep(const float a_timeStep) { m_timeStep = a_timeStep; }
 	float setTimeStep() const { return m_timeStep; }
+	std::vector<PhysicsObject*> actors() { return m_actors; };
 	// collision functions
 	void checkCollisions();
 	// collision detection

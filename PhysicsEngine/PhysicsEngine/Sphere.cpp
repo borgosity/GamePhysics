@@ -1,7 +1,7 @@
 #include "Sphere.h"
 #include "Gizmos.h"
 #include "RigidBody.h"
-
+#include "glm\gtx\transform.hpp"
 
 Sphere::Sphere(glm::vec3 position, glm::vec3 velocity, float mass, float radius, glm::vec4 colour, bool twoD)
 {
@@ -39,9 +39,11 @@ void Sphere::debug()
 void Sphere::makeGizmo()
 {
 	if (m_2D) {
-		aie::Gizmos::add2DCircle(glm::vec2(m_rigidbody->data.position.x, m_rigidbody->data.position.y), m_radius, 12, m_colour);
+		glm::mat4 transform = glm::rotate(m_rigidbody->data.rotation.z, glm::normalize(m_rigidbody->data.rotation));
+		aie::Gizmos::add2DCircle(glm::vec2(m_rigidbody->data.position.x, m_rigidbody->data.position.y), m_radius, 12, m_colour, &transform);
 	}
 	else {
-		aie::Gizmos::addSphere(m_rigidbody->data.position, m_radius, 12, 12, m_colour);
+		glm::mat4 transform = glm::rotate(m_rigidbody->data.rotation.z, glm::normalize(m_rigidbody->data.rotation));
+		aie::Gizmos::addSphere(m_rigidbody->data.position, m_radius, 12, 12, m_colour, &transform);
 	}
 }

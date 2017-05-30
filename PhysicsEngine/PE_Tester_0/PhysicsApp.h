@@ -74,6 +74,10 @@ private:
 	void demo1();
 	// -- demo 2 --
 	// add force demo
+	bool m_applyForce;
+	glm::vec3 m_forceVector;
+	Sphere * m_ballA = nullptr;
+	Sphere * m_ballB = nullptr;
 	void demo2();
 	// -- demo 3 --
 	// rocket demo

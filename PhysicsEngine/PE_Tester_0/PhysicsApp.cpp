@@ -212,9 +212,28 @@ void PhysicsApp::drawGUI()
 	ImGui::RadioButton("Demo 8", &demoMode, DEMO8);
 	if (demoMode != m_demo) {
 		m_renderChosen = false;
+
 		clear();
 	}
 	m_demo = DemoType(demoMode);
+	// do stuff if demo 2 selected
+	if (m_demo == DEMO2 && m_renderChosen)
+	{
+		ImGui::Begin("Force Demo");
+		std::string text = "Set a force Vector and click Apply";
+		ImGui::Text(text.c_str());
+		// apply force options
+		ImGui::DragFloat3("Force Vector", glm::value_ptr(m_forceVector), 0.05f, -100.0f, 100.0f, "%.2f");
+		ImGui::PushID(5);
+		ImGui::PushStyleColor(ImGuiCol_Button, ImColor::HSV(5 / 7.0f, 0.6f, 0.6f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor::HSV(5 / 7.0f, 0.7f, 0.7f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImColor::HSV(5 / 7.0f, 0.8f, 0.8f));
+		// draw button and detect click
+		if (ImGui::Button("Apply")) m_applyForce = !m_applyForce;
+		ImGui::PopStyleColor(3);
+		ImGui::PopID();
+		ImGui::End();
+	}
 	ImGui::Separator();
 	// ---------------------------------- render options
 	ImGui::Text("Select Render Type:");
@@ -293,13 +312,13 @@ void PhysicsApp::drawGUI()
 	ImGui::Separator();
 	if (m_render3D) {
 		ImGui::Text("Adjust Camera");
-		ImGui::DragFloat("Left/Right", &m_cameraView.x, 0.01f, 100.0f, 1.0f);
-		ImGui::DragFloat("Up/Down", &m_cameraView.y, 0.01f, 100.0f, 1.0f);
-		ImGui::DragFloat("In/Out", &m_cameraView.z, 0.01f, 100.0f, 1.0f);
+		ImGui::DragFloat("Left/Right", &m_cameraView.x, 1.0f, 0.01f, 100.0f);
+		ImGui::DragFloat("Up/Down", &m_cameraView.y, 1.0f, 0.01f, 100.0f);
+		ImGui::DragFloat("In/Out", &m_cameraView.z, 1.0f, 0.01f, 100.0f);
 	}
 	if (m_render2D) {
 		ImGui::Text("Adjust Camera");
-		ImGui::DragFloat("Zoom", &m_2dView, 0.01f, 100.0f, 1.0f);
+		ImGui::DragFloat("Zoom", &m_2dView, 1.0f, 1.0f, 100.0f);
 	}
 	ImGui::End();
 }
@@ -309,7 +328,7 @@ void PhysicsApp::draw2D()
 	// camera view
 	static float aspectRatio = 16 / 9.0f;
 	float size = m_2dView;
-	
+
 	// line colour
 	glm::vec4 grey(0.5f, 0.5f, 0.5f, 1.0f);
 	// line horizontal
@@ -395,8 +414,10 @@ void PhysicsApp::demo1()
 			Sphere * ball = new Sphere(glm::vec3(-11.0f, 0.0f, 0.01f), glm::vec3(5.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
 			m_physicsScene->addActor(ball);
 		}
-		m_physicsScene->setGravity(glm::vec3(0.0f, 0.f, 0.0f));
-		m_renderChosen = true;
+		if (m_render3D || m_render2D) {
+			m_physicsScene->setGravity(glm::vec3(0.0f, 0.f, 0.0f));
+			m_renderChosen = true;
+		}
 	}
 }
 /*****************************************************************************************
@@ -406,18 +427,36 @@ void PhysicsApp::demo2()
 {
 	if (!m_renderChosen) {
 		if (m_render2D && !m_render3D) {
-				Sphere * ballA = new Sphere(glm::vec3(-5.0f, 40.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
-				m_physicsScene->addActor(ballA);
-				Sphere * ballB = new Sphere(glm::vec3(5.0f, 40.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
-				m_physicsScene->addActor(ballB);
+				Sphere * m_ballA = new Sphere(glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
+				Sphere * m_ballB = new Sphere(glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 1.0f, glm::vec4(0, 1, 0, 1), true);
+				// add to scene
+				m_physicsScene->addActor(m_ballA);
+				m_physicsScene->addActor(m_ballB);
 		}
 		if (m_render3D && !m_render2D) {
-				Sphere * ballA = new Sphere(glm::vec3(-0.5f, 0.0f, 0.01f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
-				m_physicsScene->addActor(ballA);
-				Sphere * ballB = new Sphere(glm::vec3(0.5f, 0.0f, 0.01f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
-				m_physicsScene->addActor(ballB);
+				Sphere * m_ballA = new Sphere(glm::vec3(-0.5f, 0.0f, 0.01f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
+				Sphere * m_ballB = new Sphere(glm::vec3(0.5f, 0.0f, 0.01f), glm::vec3(0.0f, 0.0f, 0.0f), 3.0f, 0.5f, glm::vec4(0, 1, 0, 1));
+				// add to scene
+				m_physicsScene->addActor(m_ballA);
+				m_physicsScene->addActor(m_ballB);
 		}
-		m_renderChosen = true;
+		if (m_render3D || m_render2D) {
+			// set vars
+			m_ballA = (Sphere*)m_physicsScene->actors()[0];
+			m_ballB = (Sphere*)m_physicsScene->actors()[1];
+			m_applyForce = false;
+			m_forceVector = glm::vec3(1.0f, 0.0f, 0.0f);
+			m_renderChosen = true;
+		}
+
+	}
+	else
+	{
+		// apply force if button was clicked
+		if (m_applyForce)
+		{
+			m_ballA->rigidbody()->applyForceToActor(m_ballB->rigidbody(), m_forceVector);
+		}
 	}
 }
 /*****************************************************************************************
@@ -637,22 +676,24 @@ void PhysicsApp::demo6(float a_dt)
 		if (!m_renderChosen) {
 			// world objects
 			// sphere to sphere
-			m_sphereA = new Sphere(glm::vec3(20.0f, 50.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0, 0, 1), true);
+			m_sphereA = new Sphere(glm::vec3(-20.0f, 25.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
 			m_sphereA->rigidbody()->data.isKinematic = true;
-			m_sphereB = new Sphere(glm::vec3(20.0f, 10.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
+			m_sphereB = new Sphere(glm::vec3(-20.0f, 10.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0, 0, 1), true);
 			m_sphereB->rigidbody()->data.isKinematic = true;
-			m_sphereB->rigidbody()->data.onGround = true;
 			// box to box
-			m_boxA = new Box(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
+			m_boxA = new Box(glm::vec3(0.0f, 6.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
 			m_boxA->rigidbody()->data.isKinematic = true;
-			m_boxB = new Box(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
+			m_boxA->rigidbody()->data.onGround = true;
+			m_boxB = new Box(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
 			m_boxB->rigidbody()->data.isKinematic = true;
-			m_boxB->rigidbody()->data.onGround = true;
+
 			// box to sphere
-			m_boxC = new Box(glm::vec3(-20.0f, 55.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
+			m_boxC = new Box(glm::vec3(20.0f, 55.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
 			m_boxC->rigidbody()->data.isKinematic = true;
-			m_sphereC = new Sphere(glm::vec3(-20.0f, 40.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
+			m_sphereC = new Sphere(glm::vec3(20.0f, 10.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
 			m_sphereC->rigidbody()->data.isKinematic = true;
+			m_sphereC->rigidbody()->data.onGround = true;
+
 			// planes
 			m_planeA = new Plane(glm::vec3(0.25f, -1.0f, 0.0f), 50.0f, true);
 			m_planeB = new Plane(glm::vec3(-0.05f, -1.0f, 0.0f), 50.0f, true);
@@ -728,9 +769,10 @@ void PhysicsApp::demo7(float a_dt)
 			m_sphereB = new Sphere(glm::vec3(20.0f, 10.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
 			m_sphereB->rigidbody()->data.isKinematic = true;
 			m_sphereB->rigidbody()->data.linearDrag = 0.85f;
+			m_sphereB->rigidbody()->data.angularDrag = 0.6f;
 			m_sphereB->rigidbody()->data.elasticity = 0.8f;
-			m_sphereB->rigidbody()->data.rotation = glm::vec3(0.01f, 0.0f, 0.0f);
-			m_sphereB->rigidbody()->data.onGround = true;
+			m_sphereB->rigidbody()->data.rotation = glm::vec3(0.0f, 0.0f, 45.0f);
+			//m_sphereB->rigidbody()->data.onGround = true;
 
 			// box to box
 			//m_boxA = new Box(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
@@ -739,9 +781,10 @@ void PhysicsApp::demo7(float a_dt)
 			m_boxB = new Box(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
 			m_boxB->rigidbody()->data.isKinematic = true;
 			m_boxB->rigidbody()->data.linearDrag = 0.95f;
+			m_boxB->rigidbody()->data.angularDrag = 0.6f;
 			m_boxB->rigidbody()->data.elasticity = 0.5f;
-			m_boxB->rigidbody()->data.rotation = glm::vec3(0.01f, 0.0f, 0.0f);
-			m_boxB->rigidbody()->data.onGround = true;
+			m_boxB->rigidbody()->data.rotation = glm::vec3(0.01f, 0.0f, 45.0f);
+			//m_boxB->rigidbody()->data.onGround = true;
 
 			// box to sphere
 			//m_boxC = new Box(glm::vec3(-20.0f, 55.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);

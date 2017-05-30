@@ -70,6 +70,9 @@ void PhysicsScene::resetScene()
 
 void PhysicsScene::clearScene()
 {
+	properties.gravity = false;
+	properties.collisions = false;
+	//properties.collisionResponse = false;
 	m_actors.clear();
 }
 
@@ -85,30 +88,6 @@ void PhysicsScene::update(float a_dt)
 			if (actor != nullptr) {
 				actor->fixedUpdate( properties.gravity ? m_gravity : glm::vec3(0.0f), a_dt);
 			}
-		}
-		// if apply for was selected
-		if (m_applyForce) {
-			// find actors
-			if (m_pActorA == nullptr || m_pActorB == nullptr) {
-				int count = 0;
-				for (auto actor : m_actors) {
-					if (count == m_iActorA) {
-						m_pActorA = actor;
-					}
-					if (count == m_iActorB) {
-						m_pActorB = actor;
-					}
-					// increment count
-					count++;
-				}
-			}
-			// add force
-			m_pActorA->rigidbody()->applyForceToActor(m_pActorB->rigidbody(),glm::vec3(1.0f, 0.0f, 0.0f));
-		}
-		else {
-			// set actors back to nullptr
-			m_pActorA = nullptr; 
-			m_pActorB = nullptr;
 		}
 		// check for collisions
 		if (properties.collisions) {
@@ -201,12 +180,23 @@ bool PhysicsScene::sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_s
 					// calculate force vector
 					glm::vec3 relativeVelocity = sphereA->getVelocity() - sphereB->getVelocity();
 					glm::vec3 collisionVector = collisionNormal * (glm::dot(relativeVelocity, collisionNormal));
-					glm::vec3 forceVector = collisionVector * 1.0f / (1.0f / sphereA->rigidbody()->data.mass + 1.0f / sphereB->rigidbody()->data.mass);
+					glm::vec3 forceVector =	collisionVector * 1.0f / (1.0f / sphereA->rigidbody()->data.mass + 1.0f / sphereB->rigidbody()->data.mass);
+
 					// combine elasticity
 					float combinedElasticity = (sphereA->rigidbody()->data.elasticity +
 												sphereB->rigidbody()->data.elasticity / 2.0f);
 					// use Newton's third law to apply collision forces to colliding bodies 
 					sphereA->rigidbody()->applyForceToActor(sphereB->rigidbody(), forceVector + (forceVector*combinedElasticity));
+					
+					// apply torque
+					glm::vec3 centerPoint = sphereA->getPosition() - sphereB->getPosition();
+					glm::vec3 torqueLever = glm::normalize(glm::vec3(centerPoint.y, -centerPoint.x, 0.0f));
+
+					float torque = glm::dot(torqueLever, relativeVelocity) * 1.0f / (1.0f / sphereA->rigidbody()->data.mass + 1.0f / sphereB->rigidbody()->data.mass);
+					
+					sphereA->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f,-torque));
+					sphereB->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f, torque));
+
 					// move out spheres out of collision 
 					glm::vec3 separationVector = collisionNormal * distance * 0.5f;
 					sphereA->setPosition(sphereA->getPosition() - separationVector);
@@ -221,6 +211,12 @@ bool PhysicsScene::sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_s
 					glm::vec3 forceVector = -1 * sphere->rigidbody()->data.mass * collisionNormal * (glm::dot(collisionNormal, sphere->getVelocity()));
 					// apply force
 					sphere->rigidbody()->applyForce(forceVector * 2.0f);
+					// apply torque
+					glm::vec3 torqueLever = glm::normalize(glm::vec3(collisionNormal.y, -collisionNormal.x, 0.0f));
+
+					float torque =	glm::dot(torqueLever, sphere->getVelocity()) * -1.0f /(1.0f / sphereA->rigidbody()->data.mass);
+					sphere->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f, torque));
+
 					// move out of collision
 					glm::vec3 separationVector = collisionNormal * distance * 0.5f;
 					sphere->setPosition(sphere->getPosition() - separationVector);
@@ -274,6 +270,14 @@ bool PhysicsScene::sphereToPlane(PhysicsObject * a_sphere, PhysicsObject * a_pla
 				// only bounce if not resting on the ground
 				if (!sphere->rigidbody()->data.onGround) {
 					sphere->rigidbody()->applyForce(forceVector + (forceVector*combinedElasticity));
+					// apply torque
+					glm::vec3 centerPoint = sphere->getPosition() - planeNorm;
+					glm::vec3 torqueLever = glm::normalize(glm::vec3(centerPoint.y, -centerPoint.x, 0.0f));
+
+					float torque = glm::dot(torqueLever, sphere->getVelocity()) * -1.0f / (1.0f / sphere->rigidbody()->data.mass);
+
+					sphere->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f, torque));
+
 					// move out of collision
 					glm::vec3 separationVector = planeNorm * collision * 0.5f;
 					sphere->setPosition(sphere->getPosition() - separationVector);
@@ -327,6 +331,13 @@ bool PhysicsScene::boxToSphere(PhysicsObject * a_box, PhysicsObject * a_sphere)
 												sphere->rigidbody()->data.elasticity / 2.0f);
 					// use Newton's third law to apply collision forces to colliding bodies 
 					box->rigidbody()->applyForceToActor(sphere->rigidbody(), forceVector + (forceVector*combinedElasticity));
+
+					// apply torque
+					float torque = glm::dot(collisionVector, relativeVelocity) * 1.0f / (1.0f / box->rigidbody()->data.mass + 1.0f / sphere->rigidbody()->data.mass);
+
+					box->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f, -torque));
+					sphere->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f, torque));
+
 					// move out boxs out of collision 
 					glm::vec3 separationVector = collisionNormal * overlap * 0.5f;
 					box->setPosition(box->getPosition() - separationVector);
@@ -398,7 +409,15 @@ bool PhysicsScene::boxToPlane(PhysicsObject * a_box, PhysicsObject * a_plane)
 											plane->getElasticity() / 2.0f);
 				// only bounce if not resting on the ground
 				if (!box->rigidbody()->data.onGround) {
+					// apply force
 					box->rigidbody()->applyForce(forceVector + (forceVector*combinedElasticity));
+
+					// apply torque
+					glm::vec3 centerPoint = box->getPosition() - planeNormal;
+					glm::vec3 torqueLever = glm::normalize(glm::vec3(centerPoint.y, -centerPoint.x, 0.0f));
+					float torque = glm::dot(torqueLever, box->getVelocity()) * -1.0f / (1.0f / box->rigidbody()->data.mass);
+					box->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f, torque));
+
 					// move out of collision
 					glm::vec3 separationVector = planeNormal * collision * 0.5f;
 					box->setPosition(box->getPosition() - separationVector);
@@ -446,6 +465,13 @@ bool PhysicsScene::boxToBox(PhysicsObject * a_boxA, PhysicsObject * a_boxB)
 												boxB->rigidbody()->data.elasticity / 2.0f);
 					// use Newton's third law to apply collision forces to colliding bodies 
 					boxA->rigidbody()->applyForceToActor(boxB->rigidbody(), forceVector + (forceVector*combinedElasticity));
+
+					// apply torque
+					float torque = glm::dot(collisionVector, relativeVelocity) * 1.0f / (1.0f / boxA->rigidbody()->data.mass + 1.0f / boxB->rigidbody()->data.mass);
+
+					boxA->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f, -torque));
+					boxB->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f, torque));
+
 					// move out boxs out of collision 
 					glm::vec3 separationVector = collisionNormal * overlap * 0.5f;
 					boxA->setPosition(boxA->getPosition() - separationVector);
@@ -490,17 +516,10 @@ void PhysicsScene::debugScene()
 	std::string text = "Physics Scene";
 	ImGui::Text(text.c_str());
 	ImGui::DragFloat3("gravity", glm::value_ptr(m_gravity), 0.05f, -100.0f, 100.0f, "%.2f");
-	// apply force options
-	ImGui::InputInt("Actor A", &m_iActorA, 1, 1);
-	ImGui::InputInt("Actor B", &m_iActorB, 1, 1);
-	ImGui::PushID(5);
-	ImGui::PushStyleColor(ImGuiCol_Button, ImColor::HSV(5 / 7.0f, 0.6f, 0.6f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor::HSV(5 / 7.0f, 0.7f, 0.7f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImColor::HSV(5 / 7.0f, 0.8f, 0.8f));
-	// draw button and detect click
-	if (ImGui::Button("Force")) m_applyForce = !m_applyForce;
-	ImGui::PopStyleColor(3);
-	ImGui::PopID();
+	ImGui::Checkbox("gravityOn", &properties.gravity);
+	ImGui::Checkbox("collisionsOn", &properties.collisions);
+	//ImGui::Checkbox("collisionResponseOn", &properties.collisionResponse);
+
 	// draw actor data
 	for (auto actor : m_actors) {
 		ImGui::PushID(count);
