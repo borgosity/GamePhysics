@@ -1,5 +1,6 @@
 #pragma once
 #include "Application.h"
+#include <iostream>
 #include <glm/glm.hpp>
 #include "Renderer2D.h"
 
@@ -62,15 +63,18 @@ private:
 	bool m_render3D;
 	bool m_debug;
 	aie::Renderer2D * m_renderer;
-	aie::Font		* m_font;
+	aie::Font		* m_fontFooter;
+	aie::Font		* m_fontTitle;
+
 	glm::mat4	m_viewMatrix;
 	glm::vec3	m_cameraView;
 	float		m_2dView;
 	glm::mat4	m_projectionMatrix;
 
 	// demos
-	// -- demo 1 --
 	DemoType m_demo;
+	std::string m_demoName;
+	// -- demo 1 --
 	void demo1();
 	// -- demo 2 --
 	// add force demo
@@ -110,5 +114,8 @@ private:
 	// -- demo 7 --
 	// drag
 	void demo7(float a_dt);
+	// -- demo 8 --
+	// spring
+	void demo8(float a_dt);
 };
 

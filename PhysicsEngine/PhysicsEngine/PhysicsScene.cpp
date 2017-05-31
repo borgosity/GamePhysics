@@ -115,6 +115,10 @@ void PhysicsScene::checkCollisions()
 			PhysicsObject* objB = m_actors[inner];
 			int shapeIdA = objA->getShapeID();
 			int shapeIdB = objB->getShapeID();
+			// skip checking collisions for joints
+			if (shapeIdA < 0 || shapeIdB < 0) {
+				continue;
+			}
 			// function pointers
 			int functionID = (shapeIdA * SHAPE_COUNT) + shapeIdB;
 			fn collisionFuncPtr = collisionFuncs[functionID];
@@ -172,7 +176,7 @@ bool PhysicsScene::sphereToSphere(PhysicsObject * a_sphereA, PhysicsObject * a_s
 			bool onGroundA = sphereA->rigidbody()->data.onGround;
 			bool onGroundB = sphereB->rigidbody()->data.onGround;
 			// check either is kinematic
-			if (kinematicA || kinematicB) {
+			if (!kinematicA || !kinematicB) {
 				// get the normal of the gap between objects
 				glm::vec3 collisionNormal = glm::normalize(sphereB->getPosition() - sphereA->getPosition());
 				// if both spheres are not on the ground
@@ -261,7 +265,7 @@ bool PhysicsScene::sphereToPlane(PhysicsObject * a_sphere, PhysicsObject * a_pla
 		float collision = mag - sphere->getRadius();
 		// collision check
 		if (collision < 0.0f) {
-			if (kinematic) {
+			if (!kinematic) {
 				// calculate force vector
 				glm::vec3 forceVector = -1 * sphere->rigidbody()->data.mass * planeNorm * (glm::dot(planeNorm, sphere->getVelocity()));
 				// combine elasticity
@@ -274,9 +278,9 @@ bool PhysicsScene::sphereToPlane(PhysicsObject * a_sphere, PhysicsObject * a_pla
 					glm::vec3 centerPoint = sphere->getPosition() - planeNorm;
 					glm::vec3 torqueLever = glm::normalize(glm::vec3(centerPoint.y, -centerPoint.x, 0.0f));
 
-					float torque = glm::dot(torqueLever, sphere->getVelocity()) * -1.0f / (1.0f / sphere->rigidbody()->data.mass);
+					float torque = glm::dot(torqueLever, sphere->getVelocity()) * 1.0f / (1.0f / sphere->rigidbody()->data.mass);
 
-					sphere->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f, torque));
+					sphere->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f, -torque));
 
 					// move out of collision
 					glm::vec3 separationVector = planeNorm * collision * 0.5f;
@@ -315,7 +319,7 @@ bool PhysicsScene::boxToSphere(PhysicsObject * a_box, PhysicsObject * a_sphere)
 			bool onGroundA = box->rigidbody()->data.onGround;
 			bool onGroundB = sphere->rigidbody()->data.onGround;
 			// check either is kinematic
-			if (kinematicA || kinematicB) {
+			if (!kinematicA || !kinematicB) {
 				glm::vec3 centerDist = sphere->getPosition() - box->getPosition();
 				glm::vec3 boxesMaxSize = glm::vec3(box->getSize() + sphere->getRadius());
 				glm::vec3 collisionNormal = glm::normalize(centerDist);
@@ -401,7 +405,7 @@ bool PhysicsScene::boxToPlane(PhysicsObject * a_box, PhysicsObject * a_plane)
 		if (collision <= 0.0f) {
 			// cache some data
 			bool kinematic = box->rigidbody()->data.isKinematic;
-			if (kinematic) {
+			if (!kinematic) {
 				// calculate force vector
 				glm::vec3 forceVector = -1 * box->rigidbody()->data.mass * planeNormal * (glm::dot(planeNormal, box->getVelocity()));
 				// combine elasticity
@@ -415,8 +419,8 @@ bool PhysicsScene::boxToPlane(PhysicsObject * a_box, PhysicsObject * a_plane)
 					// apply torque
 					glm::vec3 centerPoint = box->getPosition() - planeNormal;
 					glm::vec3 torqueLever = glm::normalize(glm::vec3(centerPoint.y, -centerPoint.x, 0.0f));
-					float torque = glm::dot(torqueLever, box->getVelocity()) * -1.0f / (1.0f / box->rigidbody()->data.mass);
-					box->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f, torque));
+					float torque = glm::dot(torqueLever, box->getVelocity()) * 1.0f / (1.0f / box->rigidbody()->data.mass);
+					box->rigidbody()->applyTorque(glm::vec3(0.0f, 0.0f, -torque));
 
 					// move out of collision
 					glm::vec3 separationVector = planeNormal * collision * 0.5f;
@@ -449,7 +453,7 @@ bool PhysicsScene::boxToBox(PhysicsObject * a_boxA, PhysicsObject * a_boxB)
 			bool onGroundA = boxA->rigidbody()->data.onGround;
 			bool onGroundB = boxB->rigidbody()->data.onGround;
 			// check either is kinematic
-			if (kinematicA || kinematicB) {
+			if (!kinematicA || !kinematicB) {
 				glm::vec3 centerDist = boxB->getPosition() - boxA->getPosition();
 				glm::vec3 boxesMaxSize = glm::vec3(boxA->getSize() + boxB->getSize());
 				glm::vec3 collisionNormal = glm::normalize(centerDist);

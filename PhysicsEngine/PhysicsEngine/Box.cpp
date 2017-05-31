@@ -15,7 +15,7 @@ Box::Box(glm::vec3 position, glm::vec3 velocity, float mass, float size, glm::ve
 	m_shapeID = BOX;
 	m_size = size;
 	m_colour = colour;
-	m_rigidbody = new RigidBody(position, velocity, glm::vec3(0.0f), mass);
+	m_rigidbody = new RigidBody(position, velocity, glm::vec3(0.0f, 0.0f, 0.01f), mass);
 	m_2D = twoD;
 }
 
@@ -24,7 +24,7 @@ Box::Box(glm::vec3 position, float angle, float speed, float mass, float size, g
 	m_shapeID = BOX;
 	m_size = size;
 	m_colour = colour;
-	m_rigidbody = new RigidBody(position, angle, speed, glm::vec3(0.0f), mass);
+	m_rigidbody = new RigidBody(position, angle, speed, glm::vec3(0.0f, 0.0f, 0.01f), mass);
 	m_2D = twoD;
 }
 
@@ -46,11 +46,11 @@ void Box::debug()
 void Box::makeGizmo()
 {
 	if (m_2D) {
-		glm::mat4 transform = glm::rotate(m_rigidbody->data.rotation.z, glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
+		glm::mat4 transform = glm::rotate(m_rigidbody->data.rotation.z, glm::normalize(m_rigidbody->data.rotation));
 		aie::Gizmos::add2DAABBFilled(glm::vec2(m_rigidbody->data.position.x, m_rigidbody->data.position.y), glm::vec2(m_size), m_colour, &transform);
 	}
 	else {
-		glm::mat4 transform = glm::rotate(m_rigidbody->data.rotation.z, glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
+		glm::mat4 transform = glm::rotate(m_rigidbody->data.rotation.z, glm::normalize(-m_rigidbody->data.rotation));
 		aie::Gizmos::addAABBFilled(m_rigidbody->data.position, glm::vec3(m_size), m_colour, &transform);
 	}
 }

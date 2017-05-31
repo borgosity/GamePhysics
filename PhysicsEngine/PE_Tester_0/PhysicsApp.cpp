@@ -20,6 +20,7 @@
 #include "Plane.h"
 #include "Box.h"
 #include "GameDef.h"
+#include "SpringJoint.h"
 
 PhysicsApp::PhysicsApp()
 {
@@ -50,7 +51,9 @@ bool PhysicsApp::startup()
 	m_debug = false;
 	m_renderer = new aie::Renderer2D();
 	std::string path = "../res/font/consolas.ttf";
-	m_font = new aie::Font("../res/font/consolas.ttf", 16);
+
+	m_fontTitle = new aie::Font("../res/font/consolas.ttf", 20);
+	m_fontFooter = new aie::Font("../res/font/consolas.ttf", 16);
 
 	//printf(" %s", _fullpath(NULL, path.c_str(), 40));
 
@@ -66,7 +69,8 @@ bool PhysicsApp::startup()
 
 void PhysicsApp::shutdown()
 {
-	delete m_font;
+	delete m_fontFooter;
+	delete m_fontTitle;
 	delete m_renderer;
 	delete m_poNumberOne;
 	delete m_physicsScene;
@@ -109,25 +113,36 @@ void PhysicsApp::update(float a_dt)
 	switch (m_demo)
 	{
 	case DEMO1:
+		m_demoName = "Momentum";
 		demo1();
 		break;
 	case DEMO2:
+		m_demoName = "Force";
 		demo2();
 		break;
 	case DEMO3:
+		m_demoName = "Projectile Path";
 		demo3(a_dt);
 		break;
 	case DEMO4:
+		m_demoName = "Rocket";
 		demo4(a_dt);
 		break;
 	case DEMO5:
+		m_demoName = "Collision Detection";
 		demo5(a_dt);
 		break;
 	case DEMO6:
+		m_demoName = "Collision Response";
 		demo6(a_dt);
 		break;
 	case DEMO7:
+		m_demoName = "Drag and Rotation";
 		demo7(a_dt);
+		break;
+	case DEMO8:
+		m_demoName = "Joints and Springs";
+		demo8(a_dt);
 		break;
 	default:
 		std::cout << "Demo not yet defined" << std::endl;
@@ -182,7 +197,9 @@ void PhysicsApp::draw()
 		}
 	}
 	// output some text
-	m_renderer->drawText(m_font, "Press ESC to quit", 0.0f, 0.0f);
+	// output some text
+	m_renderer->drawText(m_fontTitle, m_demoName.c_str(), HALF_SW - ((m_demoName.length() * 0.5f) * 10), SCREEN_H - 20);
+	m_renderer->drawText(m_fontFooter, "Press ESC to quit", 0.0f, 0.0f);
 
 	// done drawing sprites
 	m_renderer->end();
@@ -364,6 +381,8 @@ void PhysicsApp::draw3D()
 	case DEMO6:
 		break;
 	case DEMO7:
+		break;
+	case DEMO8:
 		break;
 	default:
 		// draw a simple grid with gizmos
@@ -677,21 +696,21 @@ void PhysicsApp::demo6(float a_dt)
 			// world objects
 			// sphere to sphere
 			m_sphereA = new Sphere(glm::vec3(-20.0f, 25.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
-			m_sphereA->rigidbody()->data.isKinematic = true;
+			m_sphereA->rigidbody()->data.isKinematic = false;
 			m_sphereB = new Sphere(glm::vec3(-20.0f, 10.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0, 0, 1), true);
-			m_sphereB->rigidbody()->data.isKinematic = true;
+			m_sphereB->rigidbody()->data.isKinematic = false;
 			// box to box
-			m_boxA = new Box(glm::vec3(0.0f, 6.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
-			m_boxA->rigidbody()->data.isKinematic = true;
+			m_boxA = new Box(glm::vec3(0.0f, 6.0f, false), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
+			m_boxA->rigidbody()->data.isKinematic = false;
 			m_boxA->rigidbody()->data.onGround = true;
 			m_boxB = new Box(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
-			m_boxB->rigidbody()->data.isKinematic = true;
+			m_boxB->rigidbody()->data.isKinematic = false;
 
 			// box to sphere
 			m_boxC = new Box(glm::vec3(20.0f, 55.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
-			m_boxC->rigidbody()->data.isKinematic = true;
+			m_boxC->rigidbody()->data.isKinematic = false;
 			m_sphereC = new Sphere(glm::vec3(20.0f, 10.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
-			m_sphereC->rigidbody()->data.isKinematic = true;
+			m_sphereC->rigidbody()->data.isKinematic = false;
 			m_sphereC->rigidbody()->data.onGround = true;
 
 			// planes
@@ -719,21 +738,21 @@ void PhysicsApp::demo6(float a_dt)
 			// world objects
 			// box to box
 			m_boxA = new Box(glm::vec3(1.0f, 1.50f, -3.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 0.2f, 1, 1));
-			m_boxA->rigidbody()->data.isKinematic = true;
+			m_boxA->rigidbody()->data.isKinematic = false;
 			m_boxA->rigidbody()->data.onGround = true;
 			m_boxB = new Box(glm::vec3(1.0f, 10.0f, -3.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0.2f, 0, 1));
-			m_boxB->rigidbody()->data.isKinematic = true;
+			m_boxB->rigidbody()->data.isKinematic = false;
 			// box to sphere
 			m_boxC = new Box(glm::vec3(1.0f, 10.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0.2f, 1));
-			m_boxC->rigidbody()->data.isKinematic = true;
+			m_boxC->rigidbody()->data.isKinematic = false;
 			m_sphereA = new Sphere(glm::vec3(1.0f, 1.25f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
-			m_sphereA->rigidbody()->data.isKinematic = true;
+			m_sphereA->rigidbody()->data.isKinematic = false;
 			m_sphereA->rigidbody()->data.onGround = true;
 			// sphere to sphere
 			m_sphereB = new Sphere(glm::vec3(-5.0f, 10.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
-			m_sphereB->rigidbody()->data.isKinematic = true;
+			m_sphereB->rigidbody()->data.isKinematic = false;
 			m_sphereC = new Sphere(glm::vec3(-5.0f, 5.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0, 1));
-			m_sphereC->rigidbody()->data.isKinematic = true;
+			m_sphereC->rigidbody()->data.isKinematic = false;
 
 			m_planeA = new Plane(glm::vec3(-0.25f, 1.0f, 0.0f), 20.0f);
 			//m_planeB = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 10.0f);
@@ -761,46 +780,34 @@ void PhysicsApp::demo7(float a_dt)
 	if (m_render2D && !m_render3D) {
 		if (!m_renderChosen) {
 			// world objects
-			// sphere to sphere
-			//m_sphereA = new Sphere(glm::vec3(20.0f, 50.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0, 0, 1), true);
-			//m_sphereA->rigidbody()->data.isKinematic = true;
+			m_sphereA = new Sphere(glm::vec3(-20.0f, 3.0f, 0.0f), glm::vec3(0.0f), 7.0f, 3.5f, glm::vec4(0, 0.5, 1, 1), true);
+			m_sphereA->rigidbody()->data.isKinematic = false;
+			m_sphereA->rigidbody()->data.rotationLock = false;
+			m_sphereA->rigidbody()->data.linearDrag = 0.99f;
+			m_sphereA->rigidbody()->data.angularDrag = 0.95f;
+			m_sphereA->rigidbody()->data.elasticity = 0.6f;
 
-			
 			m_sphereB = new Sphere(glm::vec3(20.0f, 10.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
-			m_sphereB->rigidbody()->data.isKinematic = true;
-			m_sphereB->rigidbody()->data.linearDrag = 0.85f;
-			m_sphereB->rigidbody()->data.angularDrag = 0.6f;
+			m_sphereB->rigidbody()->data.isKinematic = false;
+			m_sphereB->rigidbody()->data.rotationLock = false;
+			m_sphereB->rigidbody()->data.linearDrag = 0.99f;
+			m_sphereB->rigidbody()->data.angularDrag = 0.9f;
 			m_sphereB->rigidbody()->data.elasticity = 0.8f;
-			m_sphereB->rigidbody()->data.rotation = glm::vec3(0.0f, 0.0f, 45.0f);
-			//m_sphereB->rigidbody()->data.onGround = true;
-
-			// box to box
-			//m_boxA = new Box(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 0.2f, 1, 1), true);
-			//m_boxA->rigidbody()->data.isKinematic = true;
 			
-			m_boxB = new Box(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
-			m_boxB->rigidbody()->data.isKinematic = true;
-			m_boxB->rigidbody()->data.linearDrag = 0.95f;
-			m_boxB->rigidbody()->data.angularDrag = 0.6f;
+			m_boxB = new Box(glm::vec3(0.0f, 20.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
+			m_boxB->rigidbody()->data.isKinematic = false;
+			m_boxB->rigidbody()->data.rotationLock = false;
+			m_boxB->rigidbody()->data.linearDrag = 0.98f;
+			m_boxB->rigidbody()->data.angularDrag = 0.85f;
 			m_boxB->rigidbody()->data.elasticity = 0.5f;
 			m_boxB->rigidbody()->data.rotation = glm::vec3(0.01f, 0.0f, 45.0f);
-			//m_boxB->rigidbody()->data.onGround = true;
 
-			// box to sphere
-			//m_boxC = new Box(glm::vec3(-20.0f, 55.0f, 0.0f), glm::vec3(0.0f), 5.0f, 2.5f, glm::vec4(1, 0.2f, 0, 1), true);
-			//m_boxC->rigidbody()->data.isKinematic = true;
-			//m_sphereC = new Sphere(glm::vec3(-20.0f, 40.0f, 0.0f), glm::vec3(0.0f), 10.0f, 5.0f, glm::vec4(0, 1, 0, 1), true);
-			//m_sphereC->rigidbody()->data.isKinematic = true;
 			// planes
 			m_planeA = new Plane(glm::vec3(0.05f, -1.0f, 0.0f), 50.0f, true);
-			//m_planeB = new Plane(glm::vec3(-0.05f, -1.0f, 0.0f), 50.0f, true);
 
-			//m_physicsScene->addActor(m_sphereA);
+			m_physicsScene->addActor(m_sphereA);
 			m_physicsScene->addActor(m_sphereB);
-			//m_physicsScene->addActor(m_boxA);
 			m_physicsScene->addActor(m_boxB);
-			//m_physicsScene->addActor(m_boxC);
-			//m_physicsScene->addActor(m_sphereC);
 			m_physicsScene->addActor(m_planeA);
 
 			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
@@ -815,33 +822,138 @@ void PhysicsApp::demo7(float a_dt)
 		if (!m_renderChosen) {
 			// world objects
 			// box to box
-			m_boxA = new Box(glm::vec3(1.0f, 1.50f, -3.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 0.2f, 1, 1));
-			m_boxA->rigidbody()->data.isKinematic = true;
-			m_boxA->rigidbody()->data.onGround = true;
 			m_boxB = new Box(glm::vec3(1.0f, 10.0f, -3.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0.2f, 0, 1));
 			m_boxB->rigidbody()->data.isKinematic = true;
-			// box to sphere
-			m_boxC = new Box(glm::vec3(1.0f, 10.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0.2f, 1));
-			m_boxC->rigidbody()->data.isKinematic = true;
-			m_sphereA = new Sphere(glm::vec3(1.0f, 1.25f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
-			m_sphereA->rigidbody()->data.isKinematic = true;
-			m_sphereA->rigidbody()->data.onGround = true;
-			// sphere to sphere
-			m_sphereB = new Sphere(glm::vec3(-5.0f, 10.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
-			m_sphereB->rigidbody()->data.isKinematic = true;
-			m_sphereC = new Sphere(glm::vec3(-5.0f, 5.0f, 0.0f), glm::vec3(0.0f), 5.0f, 0.5f, glm::vec4(1, 0, 0, 1));
-			m_sphereC->rigidbody()->data.isKinematic = true;
+			m_boxB->rigidbody()->data.isKinematic = false;
+			m_boxB->rigidbody()->data.rotationLock = false;
+			m_boxB->rigidbody()->data.linearDrag = 0.98f;
+			m_boxB->rigidbody()->data.angularDrag = 0.85f;
+			m_boxB->rigidbody()->data.elasticity = 0.5f;
+			m_boxB->rigidbody()->data.rotation = glm::vec3(0.01f, 0.0f, 45.0f);
 
-			m_planeA = new Plane(glm::vec3(-0.25f, 1.0f, 0.0f), 20.0f);
-			//m_planeB = new Plane(glm::vec3(0.0f, 1.0f, 0.0f), 10.0f);
-			m_physicsScene->addActor(m_sphereA);
-			m_physicsScene->addActor(m_boxC);
-			m_physicsScene->addActor(m_boxA);
+			m_sphereA = new Sphere(glm::vec3(5.0f, 1.0f, 3.0f), glm::vec3(0.0f), 7.0f, 0.7f, glm::vec4(0, 0.5, 1, 1));
+			m_sphereA->rigidbody()->data.isKinematic = false;
+			m_sphereA->rigidbody()->data.rotationLock = false;
+			m_sphereA->rigidbody()->data.linearDrag = 0.99f;
+			m_sphereA->rigidbody()->data.angularDrag = 0.9f;
+			m_sphereA->rigidbody()->data.elasticity = 0.8f;
+
+			m_sphereB = new Sphere(glm::vec3(-5.0f, 10.0f, 0.0f), glm::vec3(0.0f), 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
+			m_sphereB->rigidbody()->data.isKinematic = false;
+			m_sphereB->rigidbody()->data.rotationLock = false;
+			m_sphereB->rigidbody()->data.linearDrag = 0.99f;
+			m_sphereB->rigidbody()->data.angularDrag = 0.85f;
+			m_sphereB->rigidbody()->data.elasticity = 0.8f;
+
+			m_planeA = new Plane(glm::vec3(-0.05f, 1.0f, 0.0f), 20.0f);
+
 			m_physicsScene->addActor(m_boxB);
+			m_physicsScene->addActor(m_sphereA);
 			m_physicsScene->addActor(m_sphereB);
-			m_physicsScene->addActor(m_sphereC);
 			m_physicsScene->addActor(m_planeA);
 
+			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
+			m_physicsScene->properties.gravity = true;
+			m_physicsScene->properties.collisions = true;
+			m_renderChosen = true;
+		}
+	}
+}
+
+void PhysicsApp::demo8(float a_dt)
+{
+	// 2D simulation
+	if (m_render2D && !m_render3D) {
+		if (!m_renderChosen) {
+
+			// ball positions
+			int startX = -50;
+			float radius = 2;
+			float mass = 2;
+			glm::vec4 colour = glm::vec4(0, 0, 1, 1);
+			
+			// world objects
+			m_sphereA = new Sphere(glm::vec3(startX, 40.0f, 0.0f), glm::vec3(0.0f), mass, radius, colour, true);
+			m_sphereA->rigidbody()->data.isKinematic = true;
+			m_sphereA->rigidbody()->data.onGround = true;
+
+			m_sphereA->rigidbody()->data.rotationLock = false;
+			m_sphereA->rigidbody()->data.linearDrag = 0.1f;
+			m_sphereA->rigidbody()->data.angularDrag = 0.9;
+			m_sphereA->rigidbody()->data.elasticity = 0.9f;
+
+			// planes
+			m_planeA = new Plane(glm::vec3(0.05f, -1.0f, 0.0f), 50.0f, true);
+
+			m_physicsScene->addActor(m_sphereA);
+			m_physicsScene->addActor(m_planeA);
+
+			int ballCount = 10;
+			for (int i = 1; i < ballCount; i++) {
+				// update colour
+				colour = glm::vec4(colour.x, colour.y + 0.1f , colour.z - 0.1f, 1);
+				// next sphere
+				m_sphereB = new Sphere(glm::vec3(startX + i*6.0f, 40.0f, 0.0f), glm::vec3(0.0f), mass, radius, colour, true);
+				m_sphereB->rigidbody()->data.isKinematic = false;
+				m_sphereB->rigidbody()->data.rotationLock = false;
+				m_sphereB->rigidbody()->data.linearDrag = 0.9f;
+				m_sphereB->rigidbody()->data.angularDrag = 0.9f;
+				m_sphereB->rigidbody()->data.elasticity = 0.9f;
+				// add to scene
+				m_physicsScene->addActor(m_sphereB);
+				m_physicsScene->addActor(new SpringJoint(m_sphereA->rigidbody(), m_sphereB->rigidbody(), 500, 0.5f));
+				m_sphereA = m_sphereB;
+			}
+
+			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
+			m_physicsScene->properties.gravity = true;
+			m_physicsScene->properties.collisions = true;
+			m_renderChosen = true;
+		}
+
+	}
+	// 3D simulation
+	if (m_render3D && !m_render2D) {
+		if (!m_renderChosen) {
+			// ball positions
+			float startX = -22.5f;
+			float posY = 5.0f;
+			float radius = 0.7f;
+			float mass = 7.0f;
+			glm::vec4 colour = glm::vec4(0, 0, 1, 1);
+			m_cameraView = glm::vec3(1.01f, 32.0f, 42.0f);
+			// world objects
+			m_sphereA = new Sphere(glm::vec3(startX, posY, 0.0f), glm::vec3(0.0f), mass, radius, colour);
+			m_sphereA->rigidbody()->data.isKinematic = true;
+			m_sphereA->rigidbody()->data.onGround = true;
+			m_sphereA->rigidbody()->data.rotationLock = false;
+			m_sphereA->rigidbody()->data.linearDrag = 0.9f;
+			m_sphereA->rigidbody()->data.angularDrag = 0.9f;
+			m_sphereA->rigidbody()->data.elasticity = 0.8f;
+			// add to scene
+			m_physicsScene->addActor(m_sphereA);
+
+			int ballCount = 10;
+			for (int i = 1; i < ballCount; i++) {
+				// update colour
+				colour = glm::vec4(colour.x, colour.y + 0.1f, colour.z - 0.1f, 1);
+				// next sphere
+				m_sphereB = new Sphere(glm::vec3(startX + (float)i*5.0f, posY, 0.0f), glm::vec3(0.0f), mass, radius, colour);
+				m_sphereB->rigidbody()->data.isKinematic = false;
+				m_sphereB->rigidbody()->data.rotationLock = false;
+				m_sphereB->rigidbody()->data.linearDrag = 0.9f;
+				m_sphereB->rigidbody()->data.angularDrag = 0.9f;
+				m_sphereB->rigidbody()->data.elasticity = 0.8f;
+				// add to scene
+				m_physicsScene->addActor(m_sphereB);
+				m_physicsScene->addActor(new SpringJoint(m_sphereA->rigidbody(), m_sphereB->rigidbody(), 500, 0.5f));
+				m_sphereA = m_sphereB;
+			}
+			// plane
+			m_planeA = new Plane(glm::vec3(-0.05f, 1.0f, 0.0f), 20.0f);
+			// add to scene
+			m_physicsScene->addActor(m_planeA);
+			// finalise scene
 			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
 			m_physicsScene->properties.gravity = true;
 			m_physicsScene->properties.collisions = true;

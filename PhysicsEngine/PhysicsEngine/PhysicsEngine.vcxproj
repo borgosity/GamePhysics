@@ -148,6 +148,7 @@
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="Rocket.h" />
     <ClInclude Include="Sphere.h" />
+    <ClInclude Include="SpringJoint.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Box.cpp" />
@@ -159,6 +160,7 @@
     <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="Rocket.cpp" />
     <ClCompile Include="Sphere.cpp" />
+    <ClCompile Include="SpringJoint.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

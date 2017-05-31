@@ -41,26 +41,32 @@ void RigidBody::fixedUpdate(glm::vec3 gravity, float timeStep)
 	glm::vec3 totalGavity(data.onGround ? glm::vec3(0.0f) : gravity);
 	applyForce(totalGavity * data.mass * timeStep);
 	// apply drag
-	if (data.isKinematic) {
+	if (!data.isKinematic && !data.rotationLock) {
 		data.velocity *= data.linearDrag;
 		data.angularVelocity *= data.angularDrag;
 	}
 	// update position
 	data.position += data.velocity * timeStep;
 	// update rotation
-	if (data.rotation.z > 360.0f || data.rotation.z < -360.0f)
-	{
-		data.rotation.z = 0.0f;
-	}
-	else {
-		data.rotation += data.angularVelocity * timeStep;
+	if (!data.rotationLock) {
+		if (data.rotation.z > 360.0f || data.rotation.z < -360.0f)
+		{
+			data.rotation.z = 0.0f;
+		}
+		else {
+			data.rotation += data.angularVelocity * timeStep;
+		}
 	}
 	// adjust velocity's to keep them in check
 	if (length(data.velocity) < MIN_LINEAR_THRESHOLD) { 
-		data.velocity = glm::vec3(0.0f);
+		if (length(data.velocity) < length(gravity) * data.linearDrag * timeStep) {
+			data.velocity = glm::vec3(0.0f);
+		}
 	} 
 	if (length(data.angularVelocity) < MIN_ROTATION_THRESHOLD) {
-		data.angularVelocity = glm::vec3(0.0f);
+		if (length(data.velocity) < length(data.angularVelocity)) {
+			data.angularVelocity = glm::vec3(0.0f);
+		}
 	}
 }
 
