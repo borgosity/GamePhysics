@@ -116,6 +116,10 @@ private:
 	void demo7(float a_dt);
 	// -- demo 8 --
 	// spring
+	float m_spring;
+	float m_damping;
+	float m_restLength;
+	bool m_optionsD8;
 	void demo8(float a_dt);
 };
 

@@ -12,6 +12,7 @@ struct RigidBodyData {
 	float mass = 10.0f;
 	bool onGround = false;
 	bool isKinematic = true;
+	bool isStatic = false;
 	bool rotationLock = true;
 	// friction
 	float linearDrag = 1.0f;	// 1.0f equals no drag

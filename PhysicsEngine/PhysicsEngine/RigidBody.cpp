@@ -37,6 +37,10 @@ RigidBody::~RigidBody()
 
 void RigidBody::fixedUpdate(glm::vec3 gravity, float timeStep)
 {
+	// do nothing if static
+	if (data.isStatic) {
+		return;
+	}
 	// adjust gravity based on ground state
 	glm::vec3 totalGavity(data.onGround ? glm::vec3(0.0f) : gravity);
 	applyForce(totalGavity * data.mass * timeStep);
@@ -84,6 +88,7 @@ void RigidBody::debug()
 	ImGui::DragFloat("angularDrag", &data.angularDrag, 0.01f, 0.01f, 1.0f, "%.2f");
 	ImGui::DragFloat("elasticity", &data.elasticity, 0.01f, 0.01f, 1.0f, "%.2f");
 	ImGui::Checkbox("isKinematic", &data.isKinematic);
+	ImGui::Checkbox("isStatic", &data.isStatic);
 	ImGui::Checkbox("onGround", &data.onGround);
 	ImGui::Checkbox("rotationLock", &data.rotationLock);
 }
