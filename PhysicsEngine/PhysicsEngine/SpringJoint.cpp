@@ -1,6 +1,7 @@
 #include "SpringJoint.h"
 #include "RigidBody.h"
 #include "Gizmos.h"
+#include <iostream>
 
 #include "imgui_glfw3.h"
 
@@ -20,28 +21,22 @@ SpringJoint::~SpringJoint()
 
 void SpringJoint::fixedUpdate(glm::vec3 gravity, float timeStep)
 {
-	// hooke law: F = -k*X - bv
-	// - F = force exerted
-	// - k = spring constant
-	// - X = displacement (stretch) 
-	// - b = dampening value 
-	// - v = relative velocity of object
+	// get current length and stretch
 	float currentLength = glm::length(m_connections[0]->data.position - m_connections[1]->data.position);
 	float stretch = currentLength - m_restLength;
 
 	if (abs(stretch) > 0.01f)
 	{
+		// get relative distance and velocity
 		glm::vec3 relativeVelocity = m_connections[0]->data.velocity - m_connections[1]->data.velocity;
 		glm::vec3 relativeDistance = m_connections[0]->data.position - m_connections[1]->data.position;
 
-		//glm::vec3 displacement = relativeVelocity + relativeDistance / timeStep;
-		glm::vec3 displacement = (relativeVelocity + relativeDistance / timeStep) * stretch; 
-		glm::vec3 forceVector = displacement / (m_connections[0]->data.mass + m_connections[1]->data.mass) * m_damping;
+		// calculate dampening and force vector
+		glm::vec3 dampening = (relativeVelocity + relativeDistance / timeStep) * m_damping;
+		glm::vec3 forceVector = dampening / (m_connections[0]->data.mass + m_connections[1]->data.mass) * (stretch * m_spring);
 
-		//float someNumber = -m_spring * stretch;
-		//glm::vec3 anotherNumber = relativeVelocity * m_damping;
-		//glm::vec3 forceVector = someNumber - anotherNumber;
-
+		// apply force
+		m_connections[0]->applyForce(-forceVector);
 		m_connections[1]->applyForce(forceVector);
 	}
 }
@@ -69,4 +64,11 @@ void SpringJoint::makeGizmo()
 		// draw 3D line
 		aie::Gizmos::addLine(m_connections[0]->data.position, m_connections[1]->data.position, red);
 	}
+}
+
+void SpringJoint::updateSpring(float spring, float damper, float restLength)
+{
+	m_damping = restLength;
+	m_restLength = damper;
+	m_spring = spring;
 }

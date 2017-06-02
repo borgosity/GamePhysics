@@ -21,6 +21,7 @@ enum DemoType {
 	DEMO6 = 6,
 	DEMO7 = 7,
 	DEMO8 = 8,
+	SIM00 = 9,
 };
 
 class PhysicsApp :
@@ -121,5 +122,15 @@ private:
 	float m_restLength;
 	bool m_optionsD8;
 	void demo8(float a_dt);
+	// -- simulation --
+	Sphere * m_rainDrop[1000];
+	Box * m_bridgeAnchorA = nullptr;
+	Box * m_bridgeAnchorB = nullptr;
+	Plane * m_ground = nullptr;
+
+
+	void simulation(float a_dt);
+	void squareDangle();
+	void sphereDangle();
 };
 

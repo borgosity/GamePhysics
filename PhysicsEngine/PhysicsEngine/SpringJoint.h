@@ -9,6 +9,9 @@ class SpringJoint :
 public:
 	SpringJoint(RigidBody * connectionA, RigidBody * connectionB, float spring, float damping, bool twoD = false);
 	~SpringJoint();
+	
+	void updateSpring(float spring, float damper, float restLength);
+
 private:
 	void virtual fixedUpdate(glm::vec3 gravity, float timeStep);
 	void virtual debug();

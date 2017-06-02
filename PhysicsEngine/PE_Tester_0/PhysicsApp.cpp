@@ -64,9 +64,9 @@ bool PhysicsApp::startup()
 
 	// demo defaults
 	m_optionsD8 = false;
-	m_spring = 500;
+	m_spring = 0.5f;
 	m_damping = 0.5f;
-	m_restLength = 10.0f;
+	m_restLength = 7.0f;
 
 	return true;
 }
@@ -148,6 +148,10 @@ void PhysicsApp::update(float a_dt)
 		m_demoName = "Joints and Springs";
 		demo8(a_dt);
 		break;
+	case SIM00:
+		m_demoName = "Simulation";
+		simulation(a_dt);
+		break;
 	default:
 		std::cout << "Demo not yet defined" << std::endl;
 		break;
@@ -163,13 +167,13 @@ void PhysicsApp::update(float a_dt)
 			// save mouse current screeen position
 			input->getMouseXY(&m_mouseScreenPos.x, &m_mouseScreenPos.y);
 		}
-		std::cout << "mouse clicked" << std::endl;
+		//std::cout << "mouse clicked" << std::endl;
 	}
 
 	// mouse input
 	if (input->isMouseButtonUp(0) && m_mouseClicked) {
 		m_mouseClicked = false;
-		std::cout << "mouse released" << std::endl;
+		//std::cout << "mouse released" << std::endl;
 	}
 
 	// exit the application
@@ -233,6 +237,8 @@ void PhysicsApp::drawGUI()
 	ImGui::RadioButton("Demo 7", &demoMode, DEMO7);
 	ImGui::SameLine();
 	ImGui::RadioButton("Demo 8", &demoMode, DEMO8);
+	ImGui::RadioButton("Simulation", &demoMode, SIM00);
+
 	if (demoMode != m_demo) {
 		m_renderChosen = false;
 		m_optionsD8 = false;
@@ -272,7 +278,9 @@ void PhysicsApp::drawGUI()
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImColor::HSV(5 / 7.0f, 0.7f, 0.7f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImColor::HSV(5 / 7.0f, 0.8f, 0.8f));
 		// draw button and detect click
-		if (ImGui::Button("Apply")) m_optionsD8 = !m_optionsD8;
+		if (ImGui::Button("Apply")) {
+			m_optionsD8 = !m_optionsD8;
+		}
 		ImGui::PopStyleColor(3);
 		ImGui::PopID();
 		ImGui::End();
@@ -410,21 +418,22 @@ void PhysicsApp::draw3D()
 		break;
 	case DEMO7:
 		break;
-	case DEMO8:
+	case SIM00:
 		break;
 	default:
 		// draw a simple grid with gizmos
 		glm::vec4 white(1.0f);
 		glm::vec4 grey(0.5f, 0.5f, 0.5f, 1.0f);
-		for (int i = 0; i < 21; ++i) {
+		float size = 20;
+		for (int i = 0; i < 41; ++i) {
 			// draw on the Z plane, increment along the X
-			aie::Gizmos::addLine(glm::vec3(-10 + i, 0, 10),
-				glm::vec3(-10 + i, 0, -10),
-				i == 10 ? white : grey);
+			aie::Gizmos::addLine(glm::vec3(-size + i, 0, size),
+				glm::vec3(-size + i, 0, -size),
+				i == size ? white : grey);
 			// draw on the X plane, increment into the Z
-			aie::Gizmos::addLine(glm::vec3(10, 0, -10 + i),
-				glm::vec3(-10, 0, -10 + i),
-				i == 10 ? white : grey);
+			aie::Gizmos::addLine(glm::vec3(size, 0, -size + i),
+				glm::vec3(-size, 0, -size + i),
+				i == size ? white : grey);
 		}
 		break;
 	}
@@ -887,27 +896,28 @@ void PhysicsApp::demo7(float a_dt)
 		}
 	}
 }
-
+/*****************************************************************************************
+*  Demo 8 Springs
+*****************************************************************************************/
 void PhysicsApp::demo8(float a_dt)
 {
 	// 2D simulation
 	if (m_render2D && !m_render3D) {
-		if (!m_renderChosen) {
-
+		if (!m_renderChosen && m_optionsD8) {
 			// ball positions
 			int startX = 0;
 			float radius = 2;
 			float mass = 5;
-			float posY = 5.0f;
+			float posY = 50.0f;
 			glm::vec4 colour = glm::vec4(0, 0, 1, 1);
 			
 			// world objects
 			m_sphereA = new Sphere(glm::vec3(startX, posY, 0.0f), glm::vec3(0.0f), mass, radius, colour, true);
 			m_sphereA->rigidbody()->data.isKinematic = false;
 			m_sphereA->rigidbody()->data.rotationLock = false;
-			m_sphereA->rigidbody()->data.linearDrag = 0.1f;
+			m_sphereA->rigidbody()->data.linearDrag = 0.01f;
 			m_sphereA->rigidbody()->data.angularDrag = 0.9;
-			m_sphereA->rigidbody()->data.elasticity = 0.8f;
+			m_sphereA->rigidbody()->data.elasticity = 0.1f;
 
 			// planes
 			m_planeA = new Plane(glm::vec3(0.05f, -1.0f, 0.0f), 50.0f, true);
@@ -923,9 +933,9 @@ void PhysicsApp::demo8(float a_dt)
 				m_sphereB = new Sphere(glm::vec3(startX + i*m_restLength, posY, 0.0f), glm::vec3(0.0f), mass, radius, colour, true);
 				m_sphereB->rigidbody()->data.isKinematic = false;
 				m_sphereB->rigidbody()->data.rotationLock = false;
-				m_sphereB->rigidbody()->data.linearDrag = 0.9f;
+				m_sphereB->rigidbody()->data.linearDrag = 0.99f;
 				m_sphereB->rigidbody()->data.angularDrag = 0.9f;
-				m_sphereB->rigidbody()->data.elasticity = 0.8f;
+				m_sphereB->rigidbody()->data.elasticity = 0.1f;
 				// add to scene
 				m_physicsScene->addActor(m_sphereB);
 				m_physicsScene->addActor(new SpringJoint(m_sphereA->rigidbody(), m_sphereB->rigidbody(), m_spring, m_damping, true));
@@ -942,19 +952,19 @@ void PhysicsApp::demo8(float a_dt)
 	}
 	// 3D simulation
 	if (m_render3D && !m_render2D) {
-		if (!m_renderChosen) {
+		if (!m_renderChosen && m_optionsD8) {
 			// ball positions
 			float startX = 0.0f;
-			float posY = 5.0f;
-			float radius = 0.7f;
+			float posY = 15.0f;
+			float radius = 1.0f;
 			float mass = 5.0f;
 			glm::vec4 colour = glm::vec4(0, 0, 1, 1);
-			m_cameraView = glm::vec3(1.01f, 32.0f, 42.0f);
+			m_cameraView = glm::vec3(1.01f, 20.0f, 44.0f);
 			// world objects
 			m_sphereA = new Sphere(glm::vec3(startX, posY, 0.0f), glm::vec3(0.0f), mass, radius, colour);
 			m_sphereA->rigidbody()->data.isKinematic = false;
 			m_sphereA->rigidbody()->data.rotationLock = false;
-			m_sphereA->rigidbody()->data.linearDrag = 0.1f;
+			m_sphereA->rigidbody()->data.linearDrag = 0.01f;
 			m_sphereA->rigidbody()->data.angularDrag = 0.9f;
 			m_sphereA->rigidbody()->data.elasticity = 0.1f;
 			// add to scene
@@ -968,7 +978,7 @@ void PhysicsApp::demo8(float a_dt)
 				m_sphereB = new Sphere(glm::vec3(startX + (float)i*m_restLength, posY, 0.0f), glm::vec3(0.0f), mass, radius, colour);
 				m_sphereB->rigidbody()->data.isKinematic = false;
 				m_sphereB->rigidbody()->data.rotationLock = false;
-				m_sphereB->rigidbody()->data.linearDrag = 0.9f;
+				m_sphereB->rigidbody()->data.linearDrag = 0.99f;
 				m_sphereB->rigidbody()->data.angularDrag = 0.9f;
 				m_sphereB->rigidbody()->data.elasticity = 0.1f;
 				// add to scene
@@ -992,4 +1002,91 @@ void PhysicsApp::demo8(float a_dt)
 		fixedUpdate(a_dt);
 	}
 }
+/*****************************************************************************************
+*  Simulation
+*****************************************************************************************/
+void PhysicsApp::simulation(float a_dt)
+{
+	// 3D simulation
+	if (m_render3D && !m_render2D) {
+		if (!m_renderChosen) {
+			m_spring = 0.25f;
+			m_damping = 0.25f;
+			m_restLength = 2.5f;
+			// ball positions
+			float startX = -10.0f;
+			float posY = 5.0f;
+			float radius = 1.0f;
+			float mass = 5.0f;
+			glm::vec4 colour = glm::vec4(0, 0, 1, 1);
+			m_cameraView = glm::vec3(1.01f, 20.0f, 44.0f);
+			// world objects
+			squareDangle();
+			// plane
+			m_planeA = new Plane(glm::vec3(-0.05f, 1.0f, 0.0f), 20.0f);
+			// add to scene
+			//m_physicsScene->addActor(m_planeA);
+
+			// finalise scene
+			m_physicsScene->setGravity(glm::vec3(0.0f, -10.f, 0.0f));
+			m_physicsScene->properties.gravity = true;
+			m_physicsScene->properties.collisions = true;
+			m_renderChosen = true;
+		}
+	}
+}
+
+void PhysicsApp::squareDangle()
+{
+	// ball positions
+	float startX = -10.0f;
+	float endX = 15.0f;
+
+	float posY = 5.0f;
+	float radius = 1.0f;
+	float mass = 5.0f;
+	glm::vec4 colour = glm::vec4(0, 0, 1, 1);
+	// start box
+	m_boxA = new Box(glm::vec3(startX, posY, 0.0f), glm::vec3(0.0f), mass, radius, glm::vec4(0, 0.2f, 1, 1));
+	m_boxA->rigidbody()->data.isKinematic = false;
+	m_boxA->rigidbody()->data.isStatic = true;
+
+	m_boxA->rigidbody()->data.rotationLock = true;
+	m_boxA->rigidbody()->data.linearDrag = 0.01f;
+	m_boxA->rigidbody()->data.angularDrag = 0.9f;
+	m_boxA->rigidbody()->data.elasticity = 0.1f;
+	m_physicsScene->addActor(m_boxA);
+	// linking boxes
+	int ballCount = 10;
+	for (int i = 1; i < ballCount; i++) {
+		// update colour
+		colour = glm::vec4(colour.x, colour.y + 0.1f, colour.z - 0.1f, 1);
+		// next sphere
+		m_boxB = new Box(glm::vec3(startX + (float)i*m_restLength, posY, 0.0f), glm::vec3(0.0f), mass, radius, colour);
+		m_boxB->rigidbody()->data.isKinematic = false;
+		m_boxB->rigidbody()->data.rotationLock = true;
+		m_boxB->rigidbody()->data.linearDrag = (i == ballCount - 1) ? 0.01f : 0.99f;
+		m_boxB->rigidbody()->data.angularDrag = 0.9f;
+		m_boxB->rigidbody()->data.elasticity = 0.1f;
+		// add to scene
+		m_physicsScene->addActor(m_boxB);
+		m_physicsScene->addActor(new SpringJoint(m_boxA->rigidbody(), m_boxB->rigidbody(), m_spring, m_damping));
+		m_boxA = m_boxB;
+	}
+	// end box
+	//m_boxB = new Box(glm::vec3(endX, posY, 0.0f), glm::vec3(0.0f), mass, radius, glm::vec4(0, 0.2f, 1, 1));
+	//m_boxB->rigidbody()->data.isKinematic = false;
+	//m_boxB->rigidbody()->data.rotationLock = true;
+	//m_boxB->rigidbody()->data.linearDrag = 0.01f;
+	//m_boxB->rigidbody()->data.angularDrag = 0.9f;
+	//m_boxB->rigidbody()->data.elasticity = 0.1f;
+	//// add to scene
+	//m_physicsScene->addActor(m_boxB);
+	//m_physicsScene->addActor(new SpringJoint(m_boxA->rigidbody(), m_boxB->rigidbody(), m_spring, m_damping));
+}
+
+void PhysicsApp::sphereDangle()
+{
+}
+
 
