@@ -28,7 +28,9 @@ public class PlayerController : MonoBehaviour {
 
     public float boostPower = 0.0f;
     public float currentSpeed = 0.0f;
-    public int zombieCount = 10;
+
+    private GameController gameController = null;
+    public int zombieCount = 0;
 
     public bool stopped = false;
 
@@ -40,16 +42,21 @@ public class PlayerController : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
+        // controllers
         controller = GetComponent<CharacterController>();
-        speedoText = transform.GetChild(0).GetComponent<TextMesh>();
+        gameController = GameObject.FindObjectOfType<GameController>();
+        // particle systems
         exhaustA = transform.GetChild(1).GetChild(0).GetComponent<ParticleSystem>();
         exhaustB = transform.GetChild(2).GetChild(0).GetComponent<ParticleSystem>();
+        // light materials
         brakeLightL = transform.GetChild(3).GetChild(0).GetComponent<Renderer>().material;
         brakeLightR = transform.GetChild(3).GetChild(1).GetComponent<Renderer>().material;
         turnLightL = transform.GetChild(3).GetChild(2).GetComponent<Renderer>().material;
         turnLightR = transform.GetChild(3).GetChild(3).GetComponent<Renderer>().material;
         reverseLightL = transform.GetChild(3).GetChild(4).GetComponent<Renderer>().material;
         reverseLightR = transform.GetChild(3).GetChild(5).GetComponent<Renderer>().material;
+        // in game text
+        speedoText = transform.GetChild(0).GetComponent<TextMesh>();
         zombieText = transform.GetChild(4).GetChild(0).GetComponent<TextMesh>();
 
         boostPower = 200.0f;
@@ -81,7 +88,13 @@ public class PlayerController : MonoBehaviour {
     {
         Rigidbody body = hit.collider.attachedRigidbody;
         if (body == null || body.isKinematic)
+        {
+            if (body.tag == "LightPole")
+            {
+                hit.gameObject.GetComponent<StreetLight>().PlayerHitPole();
+            }
             return;
+        }
 
         if (hit.moveDirection.y < -0.3F)
             return;
@@ -118,6 +131,7 @@ public class PlayerController : MonoBehaviour {
     // update zombie text
     void ZombieTextUpdate()
     {
+        zombieCount = gameController.zombieCount;
         if (zombieCount > 0)
         {
             zombieText.text = zombieCount + " Left";
@@ -201,8 +215,6 @@ public class PlayerController : MonoBehaviour {
         {
             ragdoll.RagdollOn = true;
             ZombieHit();
-            //ragdoll.hit = true;
-            zombieCount--;
         }
     }
 
