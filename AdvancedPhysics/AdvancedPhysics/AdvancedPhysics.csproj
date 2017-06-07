@@ -81,10 +81,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Huge Mocap Library\demo\scripts\demo.cs" />
+    <Compile Include="Assets\Huge Mocap Library\demo\scripts\smoothFollow.cs" />
     <Compile Include="Assets\Scripts\CannonBall.cs" />
+    <Compile Include="Assets\Scripts\FireHydrant.cs" />
     <Compile Include="Assets\Scripts\LiquidParticle.cs" />
     <Compile Include="Assets\Scripts\ParticleGenerator.cs" />
+    <Compile Include="Assets\Scripts\PlayerController.cs" />
+    <Compile Include="Assets\Scripts\Ragdoll.cs" />
     <Compile Include="Assets\Scripts\RigidBodyState.cs" />
+    <Compile Include="Assets\Scripts\SpeedBoostScript.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Shaders\Metaballs_Multiple.shader" />
