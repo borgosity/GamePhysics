@@ -87,7 +87,11 @@ public class PlayerController : MonoBehaviour {
     void OnControllerColliderHit(ControllerColliderHit hit)
     {
         Rigidbody body = hit.collider.attachedRigidbody;
-        if (body == null || body.isKinematic)
+        if (body == null)
+            return;
+
+
+        if (body.isKinematic)
         {
             if (body.tag == "LightPole")
             {
