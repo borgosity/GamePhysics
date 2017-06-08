@@ -215,7 +215,7 @@ public class PlayerController : MonoBehaviour {
     void OnTriggerEnter(Collider other)
     {
         Ragdoll ragdoll = other.gameObject.GetComponentInParent<Ragdoll>();
-        if (ragdoll != null)
+        if (ragdoll != null && !ragdoll.dead)
         {
             ragdoll.RagdollOn = true;
             ZombieHit();
