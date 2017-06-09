@@ -6,8 +6,8 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 //[RequireComponent(typeof(Animator))]
 public class PlayerController : MonoBehaviour {
+    // character controller
     CharacterController controller = null;
-    //Animator animator = null;
     // text
     TextMesh speedoText = null;
     TextMesh zombieText = null;
@@ -74,11 +74,11 @@ public class PlayerController : MonoBehaviour {
         LightsUpdate(vertical, horizontal);
         // movement
         currentSpeed = vertical * (speed + (vertical > 0 ? boostPower : 0.0f)) * Time.deltaTime;
-        speedoText.text = (currentSpeed * 10).ToString("n0");
+        speedoText.text = (boostPower * 0.5).ToString("n0");
+        //speedoText.text = (currentSpeed * 10).ToString("n0");
         controller.SimpleMove(transform.forward * currentSpeed);
         //controller.SimpleMove(transform.up * Time.deltaTime);
         transform.Rotate(transform.up, horizontal * (speed * 0.33f) * Time.deltaTime);
-        //animator.SetFloat("Speed", vertical * speed * Time.deltaTime);
 
         // zombie text update
         ZombieTextUpdate();
