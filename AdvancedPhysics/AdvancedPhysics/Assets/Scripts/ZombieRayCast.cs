@@ -13,6 +13,8 @@ public class ZombieRayCast : MonoBehaviour {
     public Material zombieEyeL = null;
     public Material zombieEyeR = null;
     public SpriteRenderer sightSprite = null;
+    public SpriteRenderer mouthSprite = null;
+
 
     // colours
     public Color32 detected = new Color32(255, 0, 0, 84);
@@ -38,13 +40,14 @@ public class ZombieRayCast : MonoBehaviour {
         animator = GetComponent<Animator>();
         ragdoll = GetComponent<Ragdoll>();
         GetEyes();
+        GetMouth();
         GetParticles();
         sightSprite = transform.GetChild(2).gameObject.GetComponent<SpriteRenderer>();
-        
+
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    void Update () {
 		if (goManic)
         {
             if (manicTimer > 0.0f)
@@ -65,7 +68,9 @@ public class ZombieRayCast : MonoBehaviour {
             Vector3 reset = new Vector3(transform.position.x, 0.05f, transform.position.z);
             transform.position = reset;
         }
-	}
+        // keep zombie in bounds
+        StayInBounds();
+    }
 
     void FixedUpdate()
     {
@@ -106,6 +111,7 @@ public class ZombieRayCast : MonoBehaviour {
         zombieEyeL.SetColor("_EmissionColor", manicEyes);
         zombieEyeR.SetColor("_EmissionColor", manicEyes);
         sightSprite.color = detected;
+        mouthSprite.enabled = true;
         animator.SetBool("Vomit", true);
         vomit.Play();
     }
@@ -119,6 +125,32 @@ public class ZombieRayCast : MonoBehaviour {
         sightSprite.color =  normalColor;
         animator.SetBool("Vomit", false);
         vomit.Stop();
+        mouthSprite.enabled = false;
+        // square up rotation
+        if (!ragdoll.dead)
+        {
+            transform.rotation = Quaternion.LookRotation(Vector3.back);
+        }
+    }
+
+    void StayInBounds()
+    {
+        if (transform.position.z > 50)
+        {
+            transform.rotation = Quaternion.LookRotation(Vector3.back);
+        }
+        if (transform.position.z < -50)
+        {
+            transform.rotation = Quaternion.LookRotation(Vector3.forward);
+        }
+        if (transform.position.x > 50)
+        {
+            transform.rotation = Quaternion.LookRotation(Vector3.left);
+        }
+        if (transform.position.x < -50)
+        {
+            transform.rotation = Quaternion.LookRotation(Vector3.right);
+        }
     }
 
     void GetEyes()
@@ -143,5 +175,14 @@ public class ZombieRayCast : MonoBehaviour {
                                         GetChild(0). // chest
                                             GetChild(1). // lower head
                                                 GetChild(3).gameObject.GetComponent<ParticleSystem>();
+    }
+
+    void GetMouth()
+    {
+        mouthSprite = transform.GetChild(1). // root
+                                    GetChild(0). // pelvis 
+                                        GetChild(0). // chest
+                                            GetChild(1). // lower head
+                                                GetChild(4).gameObject.GetComponent<SpriteRenderer>();
     }
 }

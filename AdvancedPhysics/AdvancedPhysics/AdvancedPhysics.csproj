@@ -94,6 +94,7 @@
     <Compile Include="Assets\Scripts\RigidBodyState.cs" />
     <Compile Include="Assets\Scripts\SpeedBoostScript.cs" />
     <Compile Include="Assets\Scripts\StreetLight.cs" />
+    <Compile Include="Assets\Scripts\Tools\ReplaceGameObjects.cs" />
     <Compile Include="Assets\Scripts\ZombieController.cs" />
     <Compile Include="Assets\Scripts\ZombieRayCast.cs" />
   </ItemGroup>

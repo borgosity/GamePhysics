@@ -142,7 +142,7 @@ public class PlayerController : MonoBehaviour {
         }
         else
         {
-            zombieText.text = "Done!!";
+            zombieText.text = "Clear!";
         }
     }
 

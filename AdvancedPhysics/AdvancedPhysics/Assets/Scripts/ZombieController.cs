@@ -48,7 +48,7 @@ public class ZombieController : MonoBehaviour {
 
         float posY = 0.05f;
         positions = new Vector3[maxZombies];
-        positions[0] = new Vector3(0.0f, posY, 2.5f);
+        positions[0] = new Vector3(0.0f, posY, 0.0f);
         positions[1] = new Vector3(innerGrid, posY, innerGrid);
         positions[2] = new Vector3(-innerGrid, posY, innerGrid);
         positions[3] = new Vector3(-innerGrid, posY, -innerGrid);
