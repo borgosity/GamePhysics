@@ -7,7 +7,7 @@ struct RigidBodyData {
 	glm::vec3 startVelocity;
 	glm::vec3 position;
 	glm::vec3 startPosition;
-	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.01f); // how much rotation on each axis
+	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.00000001f); // how much rotation on each axis
 	glm::mat4 rotationTransform = glm::mat4(1);
 	float mass = 10.0f;
 	bool onGround = false;

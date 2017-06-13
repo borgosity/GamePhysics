@@ -3,7 +3,7 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include "Renderer2D.h"
-
+#include "Input.h"
 #include "GameDef.h"
 
 class PhysicsObject;
@@ -52,11 +52,13 @@ private:
 	PhysicsObject * m_poNumberOne = nullptr;
 
 	// mouse input
-	glm::ivec2 m_firstClick;
+	glm::ivec2 m_firstClickPos;
+	glm::ivec2 m_unClickPos;
 	glm::ivec2 m_mouseScreenPos;
 	glm::vec2 m_mouseWorldPos;
 
 	bool m_mouseClicked;
+	glm::vec2 cursorTo2dSpace(glm::vec2 a_mouseCoOrd);
 
 	// rendering
 	bool m_renderChosen;
@@ -123,14 +125,13 @@ private:
 	bool m_optionsD8;
 	void demo8(float a_dt);
 	// -- simulation --
-	Sphere * m_rainDrop[1000];
-	Box * m_bridgeAnchorA = nullptr;
-	Box * m_bridgeAnchorB = nullptr;
-	Plane * m_ground = nullptr;
+	float m_springForce;
+	Sphere * m_shotBall = nullptr;
+	bool m_sceneReady;
+	bool m_shoot;
 
-
-	void simulation(float a_dt);
-	void squareDangle();
-	void sphereDangle();
+	void simulation(float a_dt, aie::Input* input);
+	void squareDangle(float xPos, float yPos);
+	void sphereDangle(float xPos, float yPos);
 };
 

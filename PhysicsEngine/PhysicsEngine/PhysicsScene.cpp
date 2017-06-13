@@ -360,7 +360,7 @@ bool PhysicsScene::boxToSphere(PhysicsObject * a_box, PhysicsObject * a_sphere)
 					glm::vec3 separationVector = collisionNormal * overlap * 0.5f;
 					obj->setPosition(obj->getPosition() - separationVector);
 					// stop other box from being on ground
-					objGround->rigidbody()->data.onGround = false;
+					objGround->rigidbody()->data.onGround = objGround->rigidbody()->data.isStatic ? true : false;
 				}
 			}
 			else {

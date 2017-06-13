@@ -15,7 +15,7 @@ Box::Box(glm::vec3 position, glm::vec3 velocity, float mass, float size, glm::ve
 	m_shapeID = BOX;
 	m_size = size;
 	m_colour = colour;
-	m_rigidbody = new RigidBody(position, velocity, glm::vec3(0.0f, 0.0f, 0.01f), mass);
+	m_rigidbody = new RigidBody(position, velocity, glm::vec3(0.0f, 0.0f, 0.0000001f), mass);
 	m_2D = twoD;
 }
 
@@ -24,7 +24,7 @@ Box::Box(glm::vec3 position, float angle, float speed, float mass, float size, g
 	m_shapeID = BOX;
 	m_size = size;
 	m_colour = colour;
-	m_rigidbody = new RigidBody(position, angle, speed, glm::vec3(0.0f, 0.0f, 0.01f), mass);
+	m_rigidbody = new RigidBody(position, angle, speed, glm::vec3(0.0f, 0.0f, 0.00000001f), mass);
 	m_2D = twoD;
 }
 
