@@ -124,11 +124,11 @@ void PhysicsApp::update(float a_dt)
 		demo2();
 		break;
 	case DEMO3:
-		m_demoName = "Projectile Path";
+		m_demoName = "Rocket Propulsion";
 		demo3(a_dt);
 		break;
 	case DEMO4:
-		m_demoName = "Rocket";
+		m_demoName = "Projectile Path";
 		demo4(a_dt);
 		break;
 	case DEMO5:
