@@ -140,7 +140,7 @@ void PhysicsApp::update(float a_dt)
 		demo6(a_dt);
 		break;
 	case DEMO7:
-		m_demoName = "Drag and Rotation";
+		m_demoName = "Friction and Rotation";
 		demo7(a_dt);
 		break;
 	case DEMO8:
