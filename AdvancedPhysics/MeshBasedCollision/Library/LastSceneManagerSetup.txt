@@ -1,4 +1,0 @@
-sceneSetups:
-- path: Assets/_Scenes/01 Height Map.unity
-  isLoaded: 1
-  isActive: 1

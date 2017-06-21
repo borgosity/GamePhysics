@@ -1,4 +1,0 @@
-sceneSetups:
-- path: Assets/LiquidPhysics/LiquidPhysicsExample.unity
-  isLoaded: 1
-  isActive: 1
